@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎰 Rowlette – Standalone (IT/EN) • Leaderboard Jackpot • Balanced Zeros</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial;background:linear-gradient(135deg,#0ea5e9 0%,#7c3aed 100%);color:#fff;min-height:100vh;padding:20px}
+    .container{max-width:1200px;margin:0 auto}
+    .title{font-size:2.4rem;font-weight:900;margin:0}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .lang{background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.25); padding:6px 10px; border-radius:999px}
+    .subtitle{text-align:center;opacity:.9;margin:6px 0 16px}
+    .panel{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:16px;backdrop-filter:blur(8px)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{border:0;border-radius:10px;padding:.6rem 1rem;font-weight:700;cursor:pointer;transition:.15s all}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-primary{background:#10b981;color:#fff}.btn-primary:hover{filter:brightness(1.08)}
+    .btn-secondary{background:#f59e0b;color:#111}.btn-secondary:hover{filter:brightness(1.08)}
+    .btn-danger{background:#ef4444;color:#fff}.btn-danger:hover{filter:brightness(1.08)}
+    .grid{display:grid;gap:16px}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .market{margin-top:8px}
+    .card{background:rgba(255,255,255,.92);color:#111;border-radius:12px;min-height:92px;display:flex;align-items:center;justify-content:center;flex-direction:column;border:2px solid transparent;cursor:pointer;transition:.15s all}
+    .card:hover{transform:translateY(-4px);border-color:#fbbf24;box-shadow:0 10px 20px rgba(0,0,0,.15)}
+    .card .ico{font-size:1.8rem}
+    .card .val{font-weight:800;font-size:1.1rem}
+    .badge{display:inline-block;padding:.2rem .5rem;border-radius:999px;background:rgba(255,255,255,.18);margin-left:6px}
+    .player{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px}
+    .player.current{border-color:#fbbf24;box-shadow:0 0 0 2px rgba(251,191,36,.25)}
+    .player.exploded{opacity:.78;border-color:#ef4444}
+    .player.stopped{opacity:.65}
+    .player .name{font-weight:800;font-size:1.05rem}
+    .stat{background:rgba(255,255,255,.14);padding:.25rem .5rem;border-radius:999px;margin-left:6px}
+    .mini{display:flex;flex-wrap:wrap;gap:6px}
+    .mini .pill{background:rgba(255,255,255,.16);padding:.25rem .45rem;border-radius:6px;font-size:.8rem}
+    .log{max-height:60vh;overflow:auto}
+    .modal,.overlay{position:fixed;inset:0;display:none}
+    .overlay{background:rgba(0,0,0,.5);z-index:20}
+    .modal{z-index:30;align-items:center;justify-content:center;padding:16px}
+    .modal .box{background:#fff;color:#111;border-radius:16px;padding:16px;max-width:560px;width:100%}
+    .hidden{display:none}
+    .toast{position:fixed;left:50%;top:22px;transform:translateX(-50%);z-index:40;background:#fff;color:#111;border-radius:999px;padding:.6rem 1rem;border:2px solid #22c55e;box-shadow:0 10px 20px rgba(0,0,0,.2);display:none}
+    .errorbar{position:fixed;left:0;right:0;top:0;background:#ef4444;color:#fff;font-weight:700;padding:8px 12px;display:none;z-index:50}
+    @media (max-width:900px){.grid-2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="errorbar" id="errorbar"></div>
+  <div class="container">
+    <div class="topbar">
+      <h1 class="title">🎰 ROWLETTE</h1>
+      <div class="lang">
+        <label><input type="radio" name="lang" value="it" checked> IT</label>
+        <label style="margin-left:8px"><input type="radio" name="lang" value="en"> EN</label>
+      </div>
+    </div>
+    <div id="subtitle" class="subtitle">Family push-your-luck • mercato a 3 carte • obiettivi 🎯 • jackpot 💰 • zeri 💚 (MIN/MAX/YOU)</div>
+
+    <!-- LOBBY -->
+    <div id="lobby" class="panel">
+      <h2 id="setupTitle">🎮 Setup giocatori</h2>
+      <div style="height:8px"></div>
+      <div id="playersInputs" class="grid grid-2"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="btnAdd" class="btn btn-secondary" type="button">+ Aggiungi</button>
+        <button id="btnStart" class="btn btn-primary" type="button">🚀 Inizia</button>
+      </div>
+    </div>
+
+    <!-- GAME -->
+    <div id="game" class="panel hidden">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div>Round <span id="roundEl">1</span>/3 <span class="badge" id="deckLabel">Mazzo <span id="deckCount">0</span></span></div>
+        <div class="row" style="align-items:center;gap:8px">
+          <div><span id="turnLabel">Turno</span>: <b id="activeName"></b></div>
+          <button id="btnStop" class="btn btn-secondary" type="button">✋ Stop giocatore</button>
+          <button id="btnEndRound" class="btn btn-danger" type="button">🏁 Fine round</button>
+        </div>
+      </div>
+
+      <!-- Market -->
+      <div style="height:8px"></div>
+      <div class="panel">
+        <div class="row" style="align-items:center">
+          <h3 id="marketTitle" style="margin-right:8px">🃏 Mercato: scegli 1</h3>
+          <small id="marketHint">(le altre restano)</small>
+        </div>
+        <div id="market" class="grid grid-3 market"></div>
+      </div>
+
+      <!-- Players -->
+      <div style="height:12px"></div>
+      <div id="playersArea" class="grid grid-2"></div>
+
+      <!-- Log -->
+      <div style="height:12px"></div>
+      <div class="panel">
+        <h3 id="logTitle">📜 Log</h3>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="overlay" class="overlay"></div>
+
+    <!-- Choose Objective -->
+    <div id="objModal" class="modal">
+      <div class="box">
+        <h3 id="objModalTitle">🎯 Scegli 1 obiettivo (3 casuali)</h3>
+        <div style="height:8px"></div>
+        <div id="objChoices" class="grid grid-3"></div>
+      </div>
+    </div>
+
+    <!-- Round Summary -->
+    <div id="summaryModal" class="modal">
+      <div class="box">
+        <h2 id="summaryTitle">🎯 Fine Round</h2>
+        <div id="summaryList"></div>
+        <div class="row" style="margin-top:12px">
+          <button id="nextRoundBtn" class="btn btn-primary" type="button">➡️ Prossimo round</button>
+          <button id="newGameBtn" class="btn btn-secondary hidden" type="button" onclick="location.reload()">🔄 Nuova partita</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zero toast -->
+    <div id="zeroToast" class="toast">💚 Zero → assegnato</div>
+  </div>
+
+  <script>
+  'use strict';
+
+  // Error banner
+  window.addEventListener('error', function(e){
+    var bar = document.getElementById('errorbar');
+    if(!bar) return;
+    bar.textContent = 'JavaScript error: ' + e.message;
+    bar.style.display = 'block';
+  });
+
+  // i18n
+  var lang = 'it';
+  var L = {
+    it: {
+      subtitle: 'Family push-your-luck • mercato a 3 carte • obiettivi 🎯 • jackpot 💰 • zeri 💚 (MIN/MAX/YOU)',
+      setup: '🎮 Setup giocatori', add: '+ Aggiungi', start: '🚀 Inizia',
+      deck: 'Mazzo', turn: 'Turno', stop: '✋ Stop giocatore', endRound: '🏁 Fine round',
+      marketTitle: '🃏 Mercato: scegli 1', marketHint: '(le altre restano)', log: '📜 Log',
+      objTitle: '🎯 Scegli 1 obiettivo (3 casuali)',
+      roundEnd: '🎯 Fine Round', nextRound: '➡️ Prossimo round',
+      toastZero: function(d,t,name,pts,boom){ return '💚 '+d+' ('+t+') → '+name+' • ⚡ '+pts+'/6'+(boom?'  💥 ESPLOSIONE!':''); },
+      logStart: function(names){ return 'Partita iniziata: '+names; },
+      logPickBlack: function(p,v,j){ return p+' prende ⚫ '+v+' → 💰 +1 = '+j; },
+      logPickRed: function(p,v){ return p+' prende 🔴 '+v+' → sceglie Obiettivo 🎯'; },
+      logRemoveZero: function(p,v,t){ return p+' gioca '+v+' → rimuove ultimo 💚 (−'+t+') e rimischia'; },
+      logRaiseCap: function(p,cap){ return p+' aumenta il limite carte a '+cap; },
+      logGainObj: function(p,t,need){ return p+' ottiene 🎯 '+t+' (soglia ≥'+need+')'; },
+      logStop: function(p){ return '✋ '+p+' si ferma per questo round'; },
+      cardsLbl: 'Carte', objsLbl:'Obiettivi',
+      objNames: { Rosso:'Rosso', Nero:'Nero', Pari:'Pari', Dispari:'Dispari', Alto:'Alto', Basso:'Basso' }
+    },
+    en: {
+      subtitle: 'Family push-your-luck • 3-card market • goals 🎯 • jackpot 💰 • zeros 💚 (MIN/MAX/YOU)',
+      setup: '🎮 Player setup', add: '+ Add', start: '🚀 Start',
+      deck: 'Deck', turn: 'Turn', stop: '✋ Stop player', endRound: '🏁 End round',
+      marketTitle: '🃏 Market: pick 1', marketHint: '(others stay)', log: '📜 Log',
+      objTitle: '🎯 Choose 1 goal (3 random)',
+      roundEnd: '🎯 End of Round', nextRound: '➡️ Next round',
+      toastZero: function(d,t,name,pts,boom){ return '💚 '+d+' ('+t+') → '+name+' • ⚡ '+pts+'/6'+(boom?'  💥 BOOM!':''); },
+      logStart: function(names){ return 'Game started: '+names; },
+      logPickBlack: function(p,v,j){ return p+' takes ⚫ '+v+' → 💰 +1 = '+j; },
+      logPickRed: function(p,v){ return p+' takes 🔴 '+v+' → chooses a Goal 🎯'; },
+      logRemoveZero: function(p,v,t){ return p+' plays '+v+' → removes last 💚 (−'+t+') and shuffles back'; },
+      logRaiseCap: function(p,cap){ return p+' increases card limit to '+cap; },
+      logGainObj: function(p,t,need){ return p+' gains 🎯 '+t+' (threshold ≥'+need+')'; },
+      logStop: function(p){ return '✋ '+p+' stops for this round'; },
+      cardsLbl: 'Cards', objsLbl:'Goals',
+      objNames: { Rosso:'Red', Nero:'Black', Pari:'Even', Dispari:'Odd', Alto:'High', Basso:'Low' }
+    }
+  };
+  function tObj(name){ return (L[lang].objNames && L[lang].objNames[name]) || name; }
+  function setTexts(){
+    document.getElementById('subtitle').textContent=L[lang].subtitle;
+    document.getElementById('setupTitle').textContent=L[lang].setup;
+    document.getElementById('btnAdd').textContent=L[lang].add;
+    document.getElementById('btnStart').textContent=L[lang].start;
+    document.getElementById('deckLabel').innerHTML=L[lang].deck+' <span id="deckCount">'+(state.deck?state.deck.length:0)+'</span>';
+    document.getElementById('turnLabel').textContent=L[lang].turn;
+    document.getElementById('btnStop').textContent=L[lang].stop;
+    document.getElementById('btnEndRound').textContent=L[lang].endRound;
+    document.getElementById('marketTitle').textContent=L[lang].marketTitle;
+    document.getElementById('marketHint').textContent=L[lang].marketHint;
+    document.getElementById('logTitle').textContent=L[lang].log;
+    document.getElementById('objModalTitle').textContent=L[lang].objTitle;
+    document.getElementById('summaryTitle').textContent=L[lang].roundEnd;
+    document.getElementById('nextRoundBtn').textContent=L[lang].nextRound;
+  }
+
+  // Types & utils
+  var OBJ_TYPES = ['Rosso','Nero','Pari','Dispari','Alto','Basso'];
+  var ICON_OBJ = { 'Rosso':'🔴','Nero':'⚫','Pari':'2️⃣','Dispari':'1️⃣','Alto':'⬆','Basso':'⬇' };
+  function rnd(n){ return Math.floor(Math.random()*n); }
+  function shuffle(a){ a=[].concat(a); for(var i=a.length-1;i>0;i--){var j=rnd(i+1); var t=a[i]; a[i]=a[j]; a[j]=t;} return a; }
+  function colorFor(n){ var block = Math.floor((n-1)/2); return block % 2 === 0 ? 'red' : 'black'; }
+  function isHigh(n){ return n>=21; }
+  function isEven(n){ return n%2===0; }
+
+  // Decks (greens distribution preserved from working build)
+  function buildZeroDeck(){
+    var arr = [];
+    // 000: 2 × MAX (tier 3)
+    arr.push({kind:'zero', target:'MAX', tier:3, display:'000'});
+    arr.push({kind:'zero', target:'MAX', tier:3, display:'000'});
+    // 00: 6 × MIN (tier 2)
+    for(var i=0;i<6;i++){ arr.push({kind:'zero', target:'MIN', tier:2, display:'00'}); }
+    // 0: 4 × MAX (tier 1) and 4 × YOU (tier 1)
+    for(var j=0;j<4;j++){ arr.push({kind:'zero', target:'MAX', tier:1, display:'0'}); }
+    for(var k=0;k<4;k++){ arr.push({kind:'zero', target:'YOU', tier:1, display:'0'}); }
+    return shuffle(arr);
+  }
+  function buildNumberDeck(){ var arr=[]; for(var i=1;i<=40;i++){ arr.push({kind:'number', value:i, color:colorFor(i), isHigh:isHigh(i), isEven:isEven(i), display:String(i)}); } return arr; }
+  function buildMainDeck(){ return shuffle(buildNumberDeck().concat(buildZeroDeck())); }
+  function buildObjectiveDeck(){ var arr=[]; for(var idx=0; idx<OBJ_TYPES.length; idx++){ var t=OBJ_TYPES[idx]; for(var i=0;i<4;i++) arr.push({type:t}); } return shuffle(arr); }
+
+  // State
+  var state = {
+    round: 1,
+    active: 0,
+    deck: [],
+    market: [],
+    players: [],
+    objDeck: [],
+    log: [],
+    pendingObjectiveChoice: null,
+    lastZeroRecipient: null,
+    lastEventWasZero: false,
+    heldZeros: [],
+    totalDeck: 0
+  };
+
+  function log(msg){ state.log.unshift('R'+state.round+' › '+msg); renderLog(); }
+
+  // Lobby
+  var inputsEl = null;
+  function ensureInputs(){ if(!inputsEl) inputsEl = document.getElementById('playersInputs'); }
+  function addPlayer(name){
+    ensureInputs();
+    var wrap = document.createElement('div');
+    wrap.className = 'panel';
+    var row = document.createElement('div'); row.className='row'; row.style.alignItems='center';
+
+    var input = document.createElement('input');
+    input.style.flex = '1'; input.style.padding = '.6rem'; input.style.borderRadius = '10px'; input.style.border = '0'; input.style.background = 'rgba(255,255,255,.12)'; input.style.color = '#fff';
+    input.value = name || ('Giocatore ' + (inputsEl.querySelectorAll('input').length+1));
+
+    var del = document.createElement('button');
+    del.type='button'; del.className='btn btn-danger'; del.textContent='❌';
+    del.addEventListener('click', function(){ wrap.remove(); });
+
+    row.appendChild(input); row.appendChild(del);
+    wrap.appendChild(row); inputsEl.appendChild(wrap);
+  }
+
+  function startGame(){
+    ensureInputs();
+    var names = Array.prototype.map.call(inputsEl.querySelectorAll('input'), function(i){ return i.value.trim()||'Player'; });
+    if(names.length<2 || names.length>6){ alert(lang==='it'? 'Servono 2–6 giocatori':'2–6 players required'); return; }
+    state.players = names.map(function(n){ return { name:n, line:[], objectives:[], jackpot:1, zeroPoints:0, exploded:false, stopped:false, roundScore:0, totalScore:0, maxNumbers:10 }; });
+    state.round=1; state.active=0; state.deck = buildMainDeck(); state.objDeck = buildObjectiveDeck();
+    state.market=[]; state.heldZeros=[]; state.lastZeroRecipient=null; state.lastEventWasZero=false; state.totalDeck = state.deck.length;
+
+    document.getElementById('lobby').classList.add('hidden');
+    document.getElementById('game').classList.remove('hidden');
+
+    refillMarketPhase(); renderAll();
+    log(L[lang].logStart(names.join(', ')));
+  }
+
+  // Helpers & eligibility
+  function lastNumberInLine(p){ for(var k=p.line.length-1;k>=0;k--){ var c=p.line[k]; if(c.kind==='number') return c.value; } return -1; }
+  function numberCount(p){ var cnt=0; for(var i=0;i<p.line.length;i++){ if(p.line[i].kind==='number') cnt++; } return cnt; }
+  function flashZeroToast(text){ var t=document.getElementById('zeroToast'); t.textContent=text; t.style.display='block'; setTimeout(function(){ t.style.display='none'; }, 1200); }
+  function eligibleIndices(){ var arr=[]; state.players.forEach(function(p,i){ if(!p.stopped && !p.exploded) arr.push(i); }); return arr; }
+  function allEligibleHaveAtLeastOneNumber(){ var elig=eligibleIndices(); if(elig.length===0) return false; return elig.every(function(i){ return state.players[i].line.some(function(c){return c.kind==='number';}); }); }
+
+  // Zero assignment
+  function assignZero(z){
+    var elig = eligibleIndices();
+    if(elig.length===0){ state.heldZeros.push(z); return; }
+    if(!allEligibleHaveAtLeastOneNumber()){ state.heldZeros.push(z); return; }
+
+    var excludeIdx = (state.lastEventWasZero && state.lastZeroRecipient!=null && elig.length>1) ? state.lastZeroRecipient : null;
+
+    function tieBreakClockwise(indices){
+      var best=null, bestStep=Infinity, N=state.players.length;
+      for(var ii=0; ii<indices.length; ii++){
+        var i = indices[ii];
+        var step = (i - state.active + N) % N;
+        if(step<bestStep){ bestStep=step; best=i; }
+      }
+      return best;
+    }
+
+    function pickByLast(mode){
+      var bestVal=null, cands=[];
+      for(var m=0;m<elig.length;m++){
+        var i = elig[m]; if(excludeIdx===i) continue;
+        var v = lastNumberInLine(state.players[i]);
+        if(bestVal===null || (mode==='max' ? v>bestVal : v<bestVal)){ bestVal=v; cands=[i]; }
+        else if(v===bestVal){ cands.push(i); }
+      }
+      if(cands.length===0){
+        bestVal=null; cands=[];
+        for(var n=0;n<elig.length;n++){
+          var j = elig[n];
+          var vv = lastNumberInLine(state.players[j]);
+          if(bestVal===null || (mode==='max' ? vv>bestVal : vv<bestVal)){ bestVal=vv; cands=[j]; }
+          else if(vv===bestVal){ cands.push(j); }
+        }
+      }
+      return tieBreakClockwise(cands);
+    }
+
+    var idx = state.active;
+    if(z.target==='MAX') idx = pickByLast('max');
+    else if(z.target==='MIN') idx = pickByLast('min');
+    else { // YOU
+      if(excludeIdx===state.active && elig.length>1){ state.heldZeros.push(z); return; }
+      idx = elig.indexOf(state.active)>=0 ? state.active : elig[0];
+    }
+
+    var rec = state.players[idx];
+    rec.line.push(z); rec.zeroPoints += z.tier; if(rec.zeroPoints>=6){ rec.exploded=true; rec.stopped=true; }
+    var msg = L[lang].toastZero(z.display, z.target, rec.name, rec.zeroPoints, rec.exploded);
+    log(msg); flashZeroToast(msg);
+    state.lastZeroRecipient = idx; state.lastEventWasZero = true;
+  }
+
+  // Market refill: max 1 green per phase; reshuffle held after a non‑green appears
+  function drawUntilNonZeroOnce(greenAssigned){
+    var safety=0;
+    while(state.deck.length>0 && safety<300){
+      safety++;
+      var top = state.deck.shift();
+      if(top.kind==='zero'){
+        if(greenAssigned){ state.heldZeros.push(top); continue; }
+        assignZero(top); return true; // consumed a green in this phase
+      } else {
+        state.market.push(top); state.lastEventWasZero=false; return greenAssigned;
+      }
+    }
+    return greenAssigned;
+  }
+  function refillMarketPhase(){
+    var greenAssigned=false, safety=0, before=state.market.length;
+    while(state.market.length<3 && state.deck.length>0 && safety<500){
+      safety++; greenAssigned = drawUntilNonZeroOnce(greenAssigned) || greenAssigned;
+    }
+    var placedNonZero = state.market.length>before;
+    if(placedNonZero && state.heldZeros.length>0){ Array.prototype.push.apply(state.deck, state.heldZeros); state.heldZeros=[]; state.deck=shuffle(state.deck); }
+    updateDeckCount(); renderMarket(); maybeAutoEnd();
+  }
+  function updateDeckCount(){ var el=document.getElementById('deckCount'); if(!el) return; el.textContent = state.deck.length + ' / ' + state.totalDeck; }
+
+  // Turn helpers
+  function allStopped(){ return state.players.every(function(p){ return p.stopped; }); }
+  function nextActive(){
+    for(var step=1; step<=state.players.length; step++){
+      var idx=(state.active+step)%state.players.length;
+      if(!state.players[idx].stopped){ state.active=idx; return true; }
+    }
+    return false;
+  }
+  function maybeAutoEnd(){ if(allStopped() || state.deck.length===0){ endRound(); return true; } return false; }
+
+  // Actions
+  function pickMarket(i){
+    if(state.players[state.active].stopped){ if(nextActive()) renderAll(); return; }
+    var card = state.market.splice(i,1)[0]; var p = state.players[state.active];
+    if(card.kind==='number'){
+      p.line.push(card); state.lastEventWasZero=false;
+      if(card.color==='black'){ p.jackpot+=1; log(L[lang].logPickBlack(p.name, card.value, p.jackpot)); }
+      else { openObjectiveChoices(); log(L[lang].logPickRed(p.name, card.value)); }
+      if([10,20,30,40].indexOf(card.value)>=0){
+        for(var k=p.line.length-1;k>=0;k--){
+          var c=p.line[k]; if(c.kind==='zero'){
+            p.line.splice(k,1);
+            p.zeroPoints=Math.max(0,p.zeroPoints-c.tier);
+            state.deck.push(c);
+            state.deck=shuffle(state.deck);
+            updateDeckCount();
+            log(L[lang].logRemoveZero(p.name, card.value, c.tier));
+            break;
+          }
+        }
+      }
+      // NEW EFFECT: 5/15/25/35 increase personal card limit by +1 (no promo modal)
+      if([5,15,25,35].indexOf(card.value)>=0){
+        p.maxNumbers = (p.maxNumbers||10) + 1;
+        log(L[lang].logRaiseCap(p.name, p.maxNumbers));
+      }
+      // AUTO-STOP at personal cap (default 10)
+      if(numberCount(p) >= (p.maxNumbers||10)){
+        p.stopped=true;
+        log(lang==='it' ? ('⏹ '+p.name+' raggiunge '+(p.maxNumbers||10)+' carte: stop automatico') : ('⏹ '+p.name+' reaches '+(p.maxNumbers||10)+' cards: auto-stop'));
+      }
+    }
+    refillMarketPhase();
+    setTimeout(function(){ if(!isObjModalOpen()){ if(!maybeAutoEnd()){ nextActive(); renderAll(); } } else { renderAll(); } }, 10);
+  }
+  function stopPlayer(){ var p=state.players[state.active]; if(p.stopped) return; p.stopped=true; log(L[lang].logStop(p.name)); if(!maybeAutoEnd()){ nextActive(); renderAll(); } }
+
+  // Objectives
+  function isObjModalOpen(){ return document.getElementById('objModal').style.display==='flex'; }
+  function openObjectiveChoices(){
+    state.pendingObjectiveChoice=state.active; if(state.objDeck.length<3) state.objDeck=buildObjectiveDeck();
+    var opts=state.objDeck.splice(0,3); var box=document.getElementById('objChoices'); box.innerHTML='';
+    opts.forEach(function(o,idx){
+      var btn=document.createElement('button'); btn.className='btn btn-secondary'; btn.textContent=(ICON_OBJ[o.type]||'🎯')+' '+tObj(o.type);
+      btn.addEventListener('click',function(){
+        var p=state.players[state.pendingObjectiveChoice];
+        var need=2 + p.objectives.length;
+        p.objectives.push(o.type); log(L[lang].logGainObj(p.name, tObj(o.type), need));
+        opts.forEach(function(x,j){ if(j!==idx) state.objDeck.push(x); });
+        closeObjectiveChoices(); nextActive(); renderAll();
+      });
+      box.appendChild(btn);
+    });
+    openModal('objModal');
+  }
+  function closeObjectiveChoices(){ closeModal('objModal'); state.pendingObjectiveChoice=null; }
+
+  // Scoring & Rounds
+  function countMatches(cards, type){
+    if(type==='Rosso') return cards.filter(function(c){return c.kind==='number' && c.color==='red';}).length;
+    if(type==='Nero')  return cards.filter(function(c){return c.kind==='number' && c.color==='black';}).length;
+    if(type==='Pari')  return cards.filter(function(c){return c.kind==='number' && c.isEven;}).length;
+    if(type==='Dispari')return cards.filter(function(c){return c.kind==='number' && !c.isEven;}).length;
+    if(type==='Alto')  return cards.filter(function(c){return c.kind==='number' && c.isHigh;}).length;
+    if(type==='Basso') return cards.filter(function(c){return c.kind==='number' && !c.isHigh;}).length;
+    return 0;
+  }
+  function activeObjectives(p){ var a=0; for(var i=0;i<p.objectives.length;i++){ var need=2+i; var have=countMatches(p.line,p.objectives[i]); if(have>=need) a++; } return a; }
+  function endRound(){
+    var list=[];
+    state.players.forEach(function(p){
+      var act=activeObjectives(p); var score=p.jackpot*act; if(p.exploded) score=Math.floor(score/2);
+      p.roundScore=score; p.totalScore+=score; list.push({name:p.name,round:score,total:p.totalScore});
+      // RESET
+      p.jackpot=0; p.objectives=[]; p.zeroPoints=0; p.line=[]; p.exploded=false; p.stopped=false; p.maxNumbers=10;
+    });
+    openSummary(list);
+  }
+  function openSummary(list){
+    var s=document.getElementById('summaryList');
+    s.innerHTML=list.map(function(x){ return '<div class="panel" style="margin:8px 0"><div style="display:flex;justify-content:space-between"><b>'+x.name+'</b><span>Round: <b>'+x.round+'</b> • Totale: <b>'+x.total+'</b></span></div></div>'; }).join('');
+    openModal('summaryModal'); document.getElementById('summaryTitle').textContent=L[lang].roundEnd;
+    var nextBtn=document.getElementById('nextRoundBtn'); var newBtn=document.getElementById('newGameBtn');
+    if(state.round>=3){ nextBtn.classList.add('hidden'); newBtn.classList.remove('hidden'); }
+    else { nextBtn.classList.remove('hidden'); newBtn.classList.add('hidden'); }
+  }
+  function nextRound(){
+    closeModal('summaryModal');
+    state.round+=1; state.active=0; state.deck=buildMainDeck(); state.objDeck=buildObjectiveDeck(); state.market=[]; state.lastZeroRecipient=null; state.lastEventWasZero=false; state.heldZeros=[]; state.totalDeck=state.deck.length;
+    // NEW RULE: jackpot at start of round = leaderboard position (1st→1, 2nd→2, ...)
+    var order = state.players.map(function(p,i){ return {p:p,i:i}; })
+      .sort(function(a,b){ var d=b.p.totalScore - a.p.totalScore; return d!==0? d : (a.i - b.i); });
+    order.forEach(function(o,idx){ o.p.jackpot = idx+1; });
+    refillMarketPhase();
+    renderAll();
+  }
+
+  // Rendering
+  function renderAll(){ document.getElementById('roundEl').textContent=state.round; if(state.players[state.active]) document.getElementById('activeName').textContent=state.players[state.active].name; renderPlayers(); renderMarket(); updateDeckCount(); }
+  function renderPlayers(){
+    var area=document.getElementById('playersArea'); area.innerHTML='';
+    state.players.forEach(function(p,idx){
+      var div=document.createElement('div'); var cls=['player']; if(idx===state.active) cls.push('current'); if(p.exploded) cls.push('exploded'); if(p.stopped) cls.push('stopped'); div.className=cls.join(' ');
+      var noneCards=(L[lang].cardsLbl==='Cards'?'None':'Nessuna'); var noneObjs=(L[lang].objsLbl==='Goals'?'None':'Nessuno');
+
+      var nameRow=document.createElement('div'); nameRow.className='row'; nameRow.style.alignItems='center'; nameRow.style.justifyContent='space-between';
+      var nameEl=document.createElement('div'); nameEl.className='name'; nameEl.innerHTML = p.name+(p.stopped?' — <span style="color:#fde68a">STOP</span>':'')+(p.exploded?' — <span style="color:#fecaca">💥</span>':'');
+      var stats=document.createElement('div'); stats.innerHTML = '<span class="stat">💰 '+p.jackpot+'</span>'+
+        '<span class="stat" title="'+(lang==='it'?'Limite carte':'Card limit')+'">🔢 '+(p.maxNumbers||10)+'</span>'+
+        '<span class="stat">⚡ '+p.zeroPoints+'/6</span>'+
+        '<span class="stat">⭐ '+activeObjectives(p)+'</span>'+
+        '<span class="stat">🏆 '+p.totalScore+'</span>';
+      nameRow.appendChild(nameEl); nameRow.appendChild(stats);
+
+      var cardsTitle=document.createElement('div'); cardsTitle.innerHTML='<b>'+L[lang].cardsLbl+':</b>';
+      var cardsBox=document.createElement('div'); cardsBox.className='mini'; cardsBox.style.marginTop='4px';
+      if(p.line.length){
+        p.line.forEach(function(c){
+          var sp=document.createElement('span'); sp.className='pill';
+          if(c.kind==='number') sp.textContent=(c.color==='red'?'🔴 ':'⚫ ')+c.value;
+          else sp.textContent='💚 '+c.target+' '+Array(c.tier+1).join('•');
+          cardsBox.appendChild(sp);
+        });
+      } else {
+        cardsBox.innerHTML='<span style="opacity:.6">'+noneCards+'</span>';
+      }
+
+      var objsTitle=document.createElement('div'); objsTitle.innerHTML='<b>'+L[lang].objsLbl+':</b>';
+      var objsBox=document.createElement('div'); objsBox.className='mini'; objsBox.style.marginTop='4px';
+      if(p.objectives.length){
+        p.objectives.forEach(function(t,i){
+          var sp=document.createElement('span'); sp.className='pill'; sp.textContent=(ICON_OBJ[t]||'🎯')+' '+tObj(t)+' (≥'+(2+i)+')';
+          objsBox.appendChild(sp);
+        });
+      } else {
+        objsBox.innerHTML='<span style="opacity:.6">'+noneObjs+'</span>';
+      }
+
+      div.appendChild(nameRow);
+      div.appendChild(document.createElement('div')).style.height='6px';
+      div.appendChild(cardsTitle);
+      div.appendChild(cardsBox);
+      div.appendChild(document.createElement('div')).style.height='8px';
+      div.appendChild(objsTitle);
+      div.appendChild(objsBox);
+      area.appendChild(div);
+    });
+  }
+  function renderMarket(){
+    var m=document.getElementById('market'); m.innerHTML='';
+    state.market.forEach(function(c,i){
+      var b=document.createElement('button'); b.className='card';
+      b.addEventListener('click', function(){ pickMarket(i); });
+      b.innerHTML = (c.kind==='number'
+        ? '<div class="ico">'+(c.color==='red'?'🔴':'⚫')+'</div><div class="val">'+c.value+'</div>'
+        : '<div class="ico">💚</div><div class="val">'+c.display+' '+c.target+'</div>');
+      m.appendChild(b);
+    });
+  }
+  function renderLog(){ var l=document.getElementById('log'); l.innerHTML=state.log.map(function(x){ return '<div style="padding:4px 0">'+x+'</div>'; }).join(''); }
+
+  // Modals
+  function openModal(id){ document.getElementById('overlay').style.display='block'; var el=document.getElementById(id); el.style.display='flex'; }
+  function closeModal(id){ document.getElementById('overlay').style.display='none'; var el=document.getElementById(id); el.style.display='none'; }
+
+  // Boot
+  document.addEventListener('DOMContentLoaded', function(){
+    inputsEl = document.getElementById('playersInputs');
+    addPlayer('Anna'); addPlayer('Luca'); addPlayer('Marco');
+    document.getElementById('btnAdd').addEventListener('click', function(){ addPlayer(); });
+    document.getElementById('btnStart').addEventListener('click', function(){ startGame(); });
+    document.getElementById('btnStop').addEventListener('click', function(){ stopPlayer(); });
+    document.getElementById('btnEndRound').addEventListener('click', function(){ endRound(); });
+    document.getElementById('nextRoundBtn').addEventListener('click', function(){ nextRound(); });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="lang"]'), function(r){
+      r.addEventListener('change', function(e){ lang=e.target.value; setTexts(); renderAll(); });
+    });
+    setTexts();
+  });
+  </script>
+</body>
+</html>
