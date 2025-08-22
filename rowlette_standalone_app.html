@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🎰 Rowlette — Standalone (IT/EN) • Leaderboard Jackpot • Balanced Zeros</title>
+  <title>🎰 Rowlette – Standalone (IT/EN) • Leaderboard Jackpot • Balanced Zeros</title>
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial;background:linear-gradient(135deg,#0ea5e9 0%,#7c3aed 100%);color:#fff;min-height:100vh;padding:20px}
@@ -57,27 +57,27 @@
         <label style="margin-left:8px"><input type="radio" name="lang" value="en" checked> EN</label>
       </div>
     </div>
-    <div id="subtitle" class="subtitle">Family push-your-luck • 3-card market • goals 🎯 • jackpot 💰 • zeros 💚 (MIN/MAX/YOU)</div>
+    <div id="subtitle" class="subtitle">Family push-your-luck • mercato a 3 carte • obiettivi 🎯 • jackpot 💰 • zeri 💚 (MIN/MAX/YOU)</div>
 
     <!-- LOBBY -->
     <div id="lobby" class="panel">
-      <h2 id="setupTitle">🎮 Player setup</h2>
+      <h2 id="setupTitle">🎮 Setup giocatori</h2>
       <div style="height:8px"></div>
       <div id="playersInputs" class="grid grid-2"></div>
       <div class="row" style="margin-top:12px">
-        <button id="btnAdd" class="btn btn-secondary" type="button">+ Add</button>
-        <button id="btnStart" class="btn btn-primary" type="button">🚀 Start</button>
+        <button id="btnAdd" class="btn btn-secondary" type="button">+ Aggiungi</button>
+        <button id="btnStart" class="btn btn-primary" type="button">🚀 Inizia</button>
       </div>
     </div>
 
     <!-- GAME -->
     <div id="game" class="panel hidden">
       <div class="row" style="align-items:center;justify-content:space-between">
-        <div>Round <span id="roundEl">1</span>/3 <span class="badge" id="deckLabel">Deck <span id="deckCount">0</span></span></div>
+        <div>Round <span id="roundEl">1</span>/3 <span class="badge" id="deckLabel">Mazzo <span id="deckCount">0</span></span></div>
         <div class="row" style="align-items:center;gap:8px">
-          <div><span id="turnLabel">Turn</span>: <b id="activeName"></b></div>
-          <button id="btnStop" class="btn btn-secondary" type="button">✋ Stop player</button>
-          <button id="btnEndRound" class="btn btn-danger" type="button">🏁 End round</button>
+          <div><span id="turnLabel">Turno</span>: <b id="activeName"></b></div>
+          <button id="btnStop" class="btn btn-secondary" type="button">✋ Stop giocatore</button>
+          <button id="btnEndRound" class="btn btn-danger" type="button">🏁 Fine round</button>
         </div>
       </div>
 
@@ -85,8 +85,8 @@
       <div style="height:8px"></div>
       <div class="panel">
         <div class="row" style="align-items:center">
-          <h3 id="marketTitle" style="margin-right:8px">🃏 Market: pick 1</h3>
-          <small id="marketHint">(others stay)</small>
+          <h3 id="marketTitle" style="margin-right:8px">🃏 Mercato: scegli 1</h3>
+          <small id="marketHint">(le altre restano)</small>
         </div>
         <div id="market" class="grid grid-3 market"></div>
       </div>
@@ -109,7 +109,7 @@
     <!-- Choose Objective -->
     <div id="objModal" class="modal">
       <div class="box">
-        <h3 id="objModalTitle">🎯 Choose 1 goal (3 random)</h3>
+        <h3 id="objModalTitle">🎯 Scegli 1 obiettivo (3 casuali)</h3>
         <div style="height:8px"></div>
         <div id="objChoices" class="grid grid-3"></div>
       </div>
@@ -118,17 +118,17 @@
     <!-- Round Summary -->
     <div id="summaryModal" class="modal">
       <div class="box">
-        <h2 id="summaryTitle">🎯 End of Round</h2>
+        <h2 id="summaryTitle">🎯 Fine Round</h2>
         <div id="summaryList"></div>
         <div class="row" style="margin-top:12px">
-          <button id="nextRoundBtn" class="btn btn-primary" type="button">➡️ Next round</button>
-          <button id="newGameBtn" class="btn btn-secondary hidden" type="button" onclick="location.reload()">🔄 New game</button>
+          <button id="nextRoundBtn" class="btn btn-primary" type="button">➡️ Prossimo round</button>
+          <button id="newGameBtn" class="btn btn-secondary hidden" type="button" onclick="location.reload()">🔄 Nuova partita</button>
         </div>
       </div>
     </div>
 
     <!-- Zero toast -->
-    <div id="zeroToast" class="toast">💚 Zero → assigned</div>
+    <div id="zeroToast" class="toast">💚 Zero → assegnato</div>
   </div>
 
   <script>
@@ -160,7 +160,6 @@
       logRaiseCap: function(p,cap){ return p+' aumenta il limite carte a '+cap; },
       logGainObj: function(p,t,need){ return p+' ottiene 🎯 '+t+' (soglia ≥'+need+')'; },
       logStop: function(p){ return '✋ '+p+' si ferma per questo round'; },
-      logZeroBlocked: function(z,target,reason){ return '💚 '+z+' ('+target+') → rimischiata (' + reason + ')'; },
       cardsLbl: 'Carte', objsLbl:'Obiettivi',
       objNames: { Rosso:'Rosso', Nero:'Nero', Pari:'Pari', Dispari:'Dispari', Alto:'Alto', Basso:'Basso' }
     },
@@ -179,7 +178,6 @@
       logRaiseCap: function(p,cap){ return p+' increases card limit to '+cap; },
       logGainObj: function(p,t,need){ return p+' gains 🎯 '+t+' (threshold ≥'+need+')'; },
       logStop: function(p){ return '✋ '+p+' stops for this round'; },
-      logZeroBlocked: function(z,target,reason){ return '💚 '+z+' ('+target+') → shuffled back (' + reason + ')'; },
       cardsLbl: 'Cards', objsLbl:'Goals',
       objNames: { Rosso:'Red', Nero:'Black', Pari:'Even', Dispari:'Odd', Alto:'High', Basso:'Low' }
     }
@@ -211,17 +209,17 @@
   function isHigh(n){ return n>=21; }
   function isEven(n){ return n%2===0; }
 
-  // Decks - FIXED: Added 1 more 000 (3 total) and 1 more 00 (7 total)
+  // Decks (greens distribution preserved from working build)
   function buildZeroDeck(){
     var arr = [];
-    // 000: 3 × MAX (tier 3) - INCREASED from 2 to 3
+    // 000: 2 × MAX (tier 3)
     arr.push({kind:'zero', target:'MAX', tier:3, display:'000'});
     arr.push({kind:'zero', target:'MAX', tier:3, display:'000'});
     arr.push({kind:'zero', target:'MAX', tier:3, display:'000'});
-    // 00: 7 × MIN (tier 2) - INCREASED from 6 to 7
-    for(var i=0;i<7;i++){ arr.push({kind:'zero', target:'MIN', tier:2, display:'00'}); }
+    // 00: 6 × MIN (tier 2)
+    for(var i=0;i<6;i++){ arr.push({kind:'zero', target:'MIN', tier:2, display:'00'}); }
     // 0: 4 × MAX (tier 1) and 4 × YOU (tier 1)
-    for(var j=0;j<4;j++){ arr.push({kind:'zero', target:'MAX', tier:1, display:'0'}); }
+    for(var j=0;j<5;j++){ arr.push({kind:'zero', target:'MAX', tier:1, display:'0'}); }
     for(var k=0;k<4;k++){ arr.push({kind:'zero', target:'YOU', tier:1, display:'0'}); }
     return shuffle(arr);
   }
@@ -258,10 +256,10 @@
 
     var input = document.createElement('input');
     input.style.flex = '1'; input.style.padding = '.6rem'; input.style.borderRadius = '10px'; input.style.border = '0'; input.style.background = 'rgba(255,255,255,.12)'; input.style.color = '#fff';
-    input.value = name || ('Player ' + (inputsEl.querySelectorAll('input').length+1));
+    input.value = name || ('Giocatore ' + (inputsEl.querySelectorAll('input').length+1));
 
     var del = document.createElement('button');
-    del.type='button'; del.className='btn btn-danger'; del.textContent='✖';
+    del.type='button'; del.className='btn btn-danger'; del.textContent='❌';
     del.addEventListener('click', function(){ wrap.remove(); });
 
     row.appendChild(input); row.appendChild(del);
@@ -290,13 +288,7 @@
   function eligibleIndices(){ var arr=[]; state.players.forEach(function(p,i){ if(!p.stopped && !p.exploded) arr.push(i); }); return arr; }
   function allEligibleHaveAtLeastOneNumber(){ var elig=eligibleIndices(); if(elig.length===0) return false; return elig.every(function(i){ return state.players[i].line.some(function(c){return c.kind==='number';}); }); }
 
-  // FIXED: Function to check if player has a zero as last card
-  function hasZeroAsLastCard(p){
-    if(p.line.length === 0) return false;
-    return p.line[p.line.length-1].kind === 'zero';
-  }
-
-  // Zero assignment - FIXED: Added protection against consecutive zero assignments
+  // Zero assignment
   function assignZero(z){
     var elig = eligibleIndices();
     if(elig.length===0){ state.heldZeros.push(z); return; }
@@ -318,18 +310,18 @@
       var bestVal=null, cands=[];
       for(var m=0;m<elig.length;m++){
         var i = elig[m]; if(excludeIdx===i) continue;
-        // FIXED: Skip players who have a zero as their last card
-        if(hasZeroAsLastCard(state.players[i])) continue;
         var v = lastNumberInLine(state.players[i]);
         if(bestVal===null || (mode==='max' ? v>bestVal : v<bestVal)){ bestVal=v; cands=[i]; }
         else if(v===bestVal){ cands.push(i); }
       }
       if(cands.length===0){
-        // If all candidates were excluded due to having zero as last card, shuffle the zero back
-        state.deck.push(z);
-        state.deck = shuffle(state.deck);
-        log(L[lang].logZeroBlocked(z.display, z.target, lang==='it'?'tutti hanno già una carta 0':'all have zero as last card'));
-        return null;
+        bestVal=null; cands=[];
+        for(var n=0;n<elig.length;n++){
+          var j = elig[n];
+          var vv = lastNumberInLine(state.players[j]);
+          if(bestVal===null || (mode==='max' ? vv>bestVal : vv<bestVal)){ bestVal=vv; cands=[j]; }
+          else if(vv===bestVal){ cands.push(j); }
+        }
       }
       return tieBreakClockwise(cands);
     }
@@ -339,19 +331,19 @@
     else if(z.target==='MIN') idx = pickByLast('min');
     else { // YOU
       if(excludeIdx===state.active && elig.length>1){ state.heldZeros.push(z); return; }
-      // FIXED: Check if current player has zero as last card
-      if(hasZeroAsLastCard(state.players[state.active])) {
-        state.deck.push(z);
-        state.deck = shuffle(state.deck);
-        log(L[lang].logZeroBlocked(z.display, z.target, lang==='it'?'giocatore ha già una carta 0':'player already has zero as last card'));
-        return;
-      }
       idx = elig.indexOf(state.active)>=0 ? state.active : elig[0];
     }
 
-    if(idx === null) return; // Zero was blocked and shuffled back
-
     var rec = state.players[idx];
+    // 🔧 FIX: per MIN/MAX, se il destinatario ha già una 0 come ULTIMA carta → niente retarget, la carta rientra nel mazzo (rimescolata)
+    var lastCard = rec.line.length ? rec.line[rec.line.length-1] : null;
+    if((z.target==='MIN' || z.target==='MAX') && lastCard && lastCard.kind==='zero'){
+      state.deck.push(z);
+      state.deck = shuffle(state.deck);
+      updateDeckCount();
+      return; // nessun assegnamento, nessun retarget
+    }
+
     rec.line.push(z); rec.zeroPoints += z.tier; if(rec.zeroPoints>=6){ rec.exploded=true; rec.stopped=true; }
     var msg = L[lang].toastZero(z.display, z.target, rec.name, rec.zeroPoints, rec.exploded);
     log(msg); flashZeroToast(msg);
@@ -380,7 +372,9 @@
     }
     var placedNonZero = state.market.length>before;
     if(placedNonZero && state.heldZeros.length>0){ Array.prototype.push.apply(state.deck, state.heldZeros); state.heldZeros=[]; state.deck=shuffle(state.deck); }
-    updateDeckCount(); renderMarket(); maybeAutoEnd();
+    updateDeckCount(); renderMarket();
+    // 🔧 FIX: non chiudere il round mentre è aperta/pendente la scelta Obiettivo (10ª rossa immediata)
+    if(!isObjModalOpen() && state.pendingObjectiveChoice==null) { maybeAutoEnd(); }
   }
   function updateDeckCount(){ var el=document.getElementById('deckCount'); if(!el) return; el.textContent = state.deck.length + ' / ' + state.totalDeck; }
 
@@ -402,13 +396,7 @@
     if(card.kind==='number'){
       p.line.push(card); state.lastEventWasZero=false;
       if(card.color==='black'){ p.jackpot+=1; log(L[lang].logPickBlack(p.name, card.value, p.jackpot)); }
-      else { 
-        // FIXED: Handle red card objective choice immediately, even if at card limit
-        log(L[lang].logPickRed(p.name, card.value)); 
-        // Check if this puts player at limit AFTER handling the red card objective
-        var willBeAtLimit = numberCount(p) >= (p.maxNumbers||10);
-        openObjectiveChoices(willBeAtLimit);
-      }
+      else { openObjectiveChoices(); log(L[lang].logPickRed(p.name, card.value)); }
       if([10,20,30,40].indexOf(card.value)>=0){
         for(var k=p.line.length-1;k>=0;k--){
           var c=p.line[k]; if(c.kind==='zero'){
@@ -427,10 +415,10 @@
         p.maxNumbers = (p.maxNumbers||10) + 1;
         log(L[lang].logRaiseCap(p.name, p.maxNumbers));
       }
-      // AUTO-STOP at personal cap (default 10) - only for black cards or after red card objective is handled
-      if(card.color==='black' && numberCount(p) >= (p.maxNumbers||10)){
+      // AUTO-STOP at personal cap (default 10)
+      if(numberCount(p) >= (p.maxNumbers||10)){
         p.stopped=true;
-        log(lang==='it' ? ('ℹ '+p.name+' raggiunge '+(p.maxNumbers||10)+' carte: stop automatico') : ('ℹ '+p.name+' reaches '+(p.maxNumbers||10)+' cards: auto-stop'));
+        log(lang==='it' ? ('⏹ '+p.name+' raggiunge '+(p.maxNumbers||10)+' carte: stop automatico') : ('⏹ '+p.name+' reaches '+(p.maxNumbers||10)+' cards: auto-stop'));
       }
     }
     refillMarketPhase();
@@ -438,9 +426,9 @@
   }
   function stopPlayer(){ var p=state.players[state.active]; if(p.stopped) return; p.stopped=true; log(L[lang].logStop(p.name)); if(!maybeAutoEnd()){ nextActive(); renderAll(); } }
 
-  // Objectives - FIXED: Added parameter to handle auto-stop after red card
+  // Objectives
   function isObjModalOpen(){ return document.getElementById('objModal').style.display==='flex'; }
-  function openObjectiveChoices(willBeAtLimit){
+  function openObjectiveChoices(){
     state.pendingObjectiveChoice=state.active; if(state.objDeck.length<3) state.objDeck=buildObjectiveDeck();
     var opts=state.objDeck.splice(0,3); var box=document.getElementById('objChoices'); box.innerHTML='';
     opts.forEach(function(o,idx){
@@ -450,14 +438,7 @@
         var need=2 + p.objectives.length;
         p.objectives.push(o.type); log(L[lang].logGainObj(p.name, tObj(o.type), need));
         opts.forEach(function(x,j){ if(j!==idx) state.objDeck.push(x); });
-        closeObjectiveChoices(); 
-        // FIXED: Handle auto-stop after red card objective choice
-        if(willBeAtLimit){
-          p.stopped=true;
-          log(lang==='it' ? ('ℹ '+p.name+' raggiunge '+(p.maxNumbers||10)+' carte: stop automatico') : ('ℹ '+p.name+' reaches '+(p.maxNumbers||10)+' cards: auto-stop'));
-        }
-        if(!maybeAutoEnd()){ nextActive(); } 
-        renderAll();
+        closeObjectiveChoices(); nextActive(); renderAll();
       });
       box.appendChild(btn);
     });
@@ -488,7 +469,7 @@
   }
   function openSummary(list){
     var s=document.getElementById('summaryList');
-    s.innerHTML=list.map(function(x){ return '<div class="panel" style="margin:8px 0"><div style="display:flex;justify-content:space-between"><b>'+x.name+'</b><span>Round: <b>'+x.round+'</b> • Total: <b>'+x.total+'</b></span></div></div>'; }).join('');
+    s.innerHTML=list.map(function(x){ return '<div class="panel" style="margin:8px 0"><div style="display:flex;justify-content:space-between"><b>'+x.name+'</b><span>Round: <b>'+x.round+'</b> • Totale: <b>'+x.total+'</b></span></div></div>'; }).join('');
     openModal('summaryModal'); document.getElementById('summaryTitle').textContent=L[lang].roundEnd;
     var nextBtn=document.getElementById('nextRoundBtn'); var newBtn=document.getElementById('newGameBtn');
     if(state.round>=3){ nextBtn.classList.add('hidden'); newBtn.classList.remove('hidden'); }
@@ -497,10 +478,20 @@
   function nextRound(){
     closeModal('summaryModal');
     state.round+=1; state.active=0; state.deck=buildMainDeck(); state.objDeck=buildObjectiveDeck(); state.market=[]; state.lastZeroRecipient=null; state.lastEventWasZero=false; state.heldZeros=[]; state.totalDeck=state.deck.length;
-    // NEW RULE: jackpot at start of round = leaderboard position (1st→1, 2nd→2, ...)
-    var order = state.players.map(function(p,i){ return {p:p,i:i}; })
-      .sort(function(a,b){ var d=b.p.totalScore - a.p.totalScore; return d!==0? d : (a.i - b.i); });
-    order.forEach(function(o,idx){ o.p.jackpot = idx+1; });
+    // NEW RULE (2025-08-21): Handicap coins based on last-round gap from the leader.
+    // Everyone starts with 1 coin + 1 extra per full 10 pts behind the top scorer of the previous round (max +3 extra).
+    var useCumulative = state.round >= 3; // from round 3 use cumulative totals
+    var top = 0;
+    for (var ii=0; ii<state.players.length; ii++) {
+      var refVal = useCumulative ? (state.players[ii].totalScore || 0) : (state.players[ii].roundScore || 0);
+      if (refVal > top) top = refVal;
+    }
+    state.players.forEach(function(p){
+      var myVal = useCumulative ? (p.totalScore || 0) : (p.roundScore || 0);
+      var gap = Math.max(0, top - myVal);
+      var extra = Math.min(3, Math.floor(gap / 10));
+      p.jackpot = 1 + extra;
+    });
     refillMarketPhase();
     renderAll();
   }
@@ -590,4 +581,4 @@
   </script>
 </body>
 </html>
-      //
+
