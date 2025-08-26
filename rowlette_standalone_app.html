@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🎰 Rowlette — Standalone (IT/EN) • Leaderboard Jackpot • Balanced Zeros</title>
+  <title>🎰 Rowlette — Standalone (IT/EN) • Leaderboard Jackpot • Balanced Zeros • Specials</title>
   <style>
     *{box-sizing:border-box}html,body{margin:0;padding:0}
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial;background:linear-gradient(135deg,#0ea5e9 0%,#7c3aed 100%);color:#fff;min-height:100vh;padding:20px}
@@ -158,11 +158,12 @@
       logPickRed: function(p,v){ return p+' prende 🔴 '+v+' → sceglie Obiettivo 🎯'; },
       logRemoveZero: function(p,v,t){ return p+' gioca '+v+' → rimuove ultimo 💚 (−'+t+') e rimischia'; },
       logRaiseCap: function(p,cap){ return p+' aumenta il limite carte a '+cap; },
+      logNoZeroToRemove: function(p,v){ return p+' gioca '+v+' → nessun 💚 da rimuovere'; },
       logGainObj: function(p,t,need){ return p+' ottiene 🎯 '+t+' (soglia ≥'+need+')'; },
       logStop: function(p){ return '✋ '+p+' si ferma per questo round'; },
       logZeroBlocked: function(z,target,reason){ return '💚 '+z+' ('+target+') → rimischiata (' + reason + ')'; },
       cardsLbl: 'Carte', objsLbl:'Obiettivi',
-      objNames: { Rosso:'Rosso', Nero:'Nero', Pari:'Pari', Dispari:'Dispari', Alto:'Alto', Basso:'Basso' }
+      specialR0: '🔷 Rimuovi 0', specialCap: '🔷 +Limite'
     },
     en: {
       subtitle: 'Family push-your-luck • 3-card market • goals 🎯 • jackpot 💰 • zeros 💚 (MIN/MAX/YOU)',
@@ -177,11 +178,12 @@
       logPickRed: function(p,v){ return p+' takes 🔴 '+v+' → chooses a Goal 🎯'; },
       logRemoveZero: function(p,v,t){ return p+' plays '+v+' → removes last 💚 (−'+t+') and shuffles back'; },
       logRaiseCap: function(p,cap){ return p+' increases card limit to '+cap; },
+      logNoZeroToRemove: function(p,v){ return p+' plays '+v+' → no 💚 to remove'; },
       logGainObj: function(p,t,need){ return p+' gains 🎯 '+t+' (threshold ≥'+need+')'; },
       logStop: function(p){ return '✋ '+p+' stops for this round'; },
       logZeroBlocked: function(z,target,reason){ return '💚 '+z+' ('+target+') → shuffled back (' + reason + ')'; },
       cardsLbl: 'Cards', objsLbl:'Goals',
-      objNames: { Rosso:'Red', Nero:'Black', Pari:'Even', Dispari:'Odd', Alto:'High', Basso:'Low' }
+      specialR0: '🔷 Remove 0', specialCap: '🔷 +Limit'
     }
   };
   function tObj(name){ return (L[lang].objNames && L[lang].objNames[name]) || name; }
@@ -225,8 +227,14 @@
     for(var k=0;k<4;k++){ arr.push({kind:'zero', target:'YOU', tier:1, display:'0'}); }
     return shuffle(arr);
   }
+  function buildSpecialDeck(){
+    var arr = [];
+    for(var i=0;i<4;i++){ arr.push({kind:'special', effect:'remove_zero', display:'R0'}); }
+    for(var j=0;j<4;j++){ arr.push({kind:'special', effect:'raise_cap', display:'+L'}); }
+    return shuffle(arr);
+  }
   function buildNumberDeck(){ var arr=[]; for(var i=1;i<=40;i++){ arr.push({kind:'number', value:i, color:colorFor(i), isHigh:isHigh(i), isEven:isEven(i), display:String(i)}); } return arr; }
-  function buildMainDeck(){ return shuffle(buildNumberDeck().concat(buildZeroDeck())); }
+  function buildMainDeck(){ return shuffle(buildNumberDeck().concat(buildZeroDeck()).concat(buildSpecialDeck())); }
   function buildObjectiveDeck(){ var arr=[]; for(var idx=0; idx<OBJ_TYPES.length; idx++){ var t=OBJ_TYPES[idx]; for(var i=0;i<4;i++) arr.push({type:t}); } return shuffle(arr); }
 
   // State
@@ -280,7 +288,7 @@
     document.getElementById('game').classList.remove('hidden');
 
     refillMarketPhase(); renderAll();
-    log(L[lang].logStart(names.join(', ')));
+    log((lang==='it'?'Partita iniziata: ':'Game started: ')+names.join(', '));
   }
 
   // Helpers & eligibility
@@ -289,14 +297,9 @@
   function flashZeroToast(text){ var t=document.getElementById('zeroToast'); t.textContent=text; t.style.display='block'; setTimeout(function(){ t.style.display='none'; }, 1200); }
   function eligibleIndices(){ var arr=[]; state.players.forEach(function(p,i){ if(!p.stopped && !p.exploded) arr.push(i); }); return arr; }
   function allEligibleHaveAtLeastOneNumber(){ var elig=eligibleIndices(); if(elig.length===0) return false; return elig.every(function(i){ return state.players[i].line.some(function(c){return c.kind==='number';}); }); }
+  function hasZeroAsLastCard(p){ if(p.line.length === 0) return false; return p.line[p.line.length-1].kind === 'zero'; }
 
-  // FIXED: Function to check if player has a zero as last card
-  function hasZeroAsLastCard(p){
-    if(p.line.length === 0) return false;
-    return p.line[p.line.length-1].kind === 'zero';
-  }
-
-  // Zero assignment - FIXED: Added protection against consecutive zero assignments
+  // Zero assignment (unchanged except protections)
   function assignZero(z){
     var elig = eligibleIndices();
     if(elig.length===0){ state.heldZeros.push(z); return; }
@@ -318,19 +321,12 @@
       var bestVal=null, cands=[];
       for(var m=0;m<elig.length;m++){
         var i = elig[m]; if(excludeIdx===i) continue;
-        // FIXED: Skip players who have a zero as their last card
-        if(hasZeroAsLastCard(state.players[i])) continue;
+        if(hasZeroAsLastCard(state.players[i])) continue; // skip if last is zero
         var v = lastNumberInLine(state.players[i]);
         if(bestVal===null || (mode==='max' ? v>bestVal : v<bestVal)){ bestVal=v; cands=[i]; }
         else if(v===bestVal){ cands.push(i); }
       }
-      if(cands.length===0){
-        // If all candidates were excluded due to having zero as last card, shuffle the zero back
-        state.deck.push(z);
-        state.deck = shuffle(state.deck);
-        log(L[lang].logZeroBlocked(z.display, z.target, lang==='it'?'tutti hanno già una carta 0':'all have zero as last card'));
-        return null;
-      }
+      if(cands.length===0){ state.deck.push(z); state.deck = shuffle(state.deck); log(L[lang].logZeroBlocked(z.display, z.target, lang==='it'?'tutti hanno già una carta 0':'all have zero as last card')); return null; }
       return tieBreakClockwise(cands);
     }
 
@@ -339,17 +335,11 @@
     else if(z.target==='MIN') idx = pickByLast('min');
     else { // YOU
       if(excludeIdx===state.active && elig.length>1){ state.heldZeros.push(z); return; }
-      // FIXED: Check if current player has zero as last card
-      if(hasZeroAsLastCard(state.players[state.active])) {
-        state.deck.push(z);
-        state.deck = shuffle(state.deck);
-        log(L[lang].logZeroBlocked(z.display, z.target, lang==='it'?'giocatore ha già una carta 0':'player already has zero as last card'));
-        return;
-      }
+      if(hasZeroAsLastCard(state.players[state.active])) { state.deck.push(z); state.deck = shuffle(state.deck); log(L[lang].logZeroBlocked(z.display, z.target, lang==='it'?'giocatore ha già una carta 0':'player already has zero as last card')); return; }
       idx = elig.indexOf(state.active)>=0 ? state.active : elig[0];
     }
 
-    if(idx === null) return; // Zero was blocked and shuffled back
+    if(idx === null) return; // zero was blocked
 
     var rec = state.players[idx];
     rec.line.push(z); rec.zeroPoints += z.tier; if(rec.zeroPoints>=6){ rec.exploded=true; rec.stopped=true; }
@@ -386,13 +376,7 @@
 
   // Turn helpers
   function allStopped(){ return state.players.every(function(p){ return p.stopped; }); }
-  function nextActive(){
-    for(var step=1; step<=state.players.length; step++){
-      var idx=(state.active+step)%state.players.length;
-      if(!state.players[idx].stopped){ state.active=idx; return true; }
-    }
-    return false;
-  }
+  function nextActive(){ for(var step=1; step<=state.players.length; step++){ var idx=(state.active+step)%state.players.length; if(!state.players[idx].stopped){ state.active=idx; return true; } } return false; }
   function maybeAutoEnd(){ if(allStopped() || state.deck.length===0){ endRound(); return true; } return false; }
 
   // Actions
@@ -402,61 +386,55 @@
     if(card.kind==='number'){
       p.line.push(card); state.lastEventWasZero=false;
       if(card.color==='black'){ p.jackpot+=1; log(L[lang].logPickBlack(p.name, card.value, p.jackpot)); }
-      else { 
-        // FIXED: Handle red card objective choice immediately, even if at card limit
-        log(L[lang].logPickRed(p.name, card.value)); 
-        // Check if this puts player at limit AFTER handling the red card objective
-        var willBeAtLimit = numberCount(p) >= (p.maxNumbers||10);
-        openObjectiveChoices(willBeAtLimit);
-      }
-      if([10,20,30,40].indexOf(card.value)>=0){
-        for(var k=p.line.length-1;k>=0;k--){
-          var c=p.line[k]; if(c.kind==='zero'){
-            p.line.splice(k,1);
-            p.zeroPoints=Math.max(0,p.zeroPoints-c.tier);
-            state.deck.push(c);
-            state.deck=shuffle(state.deck);
-            updateDeckCount();
-            log(L[lang].logRemoveZero(p.name, card.value, c.tier));
-            break;
-          }
-        }
-      }
-      // NEW EFFECT: 5/15/25/35 increase personal card limit by +1 (no promo modal)
-      if([5,15,25,35].indexOf(card.value)>=0){
-        p.maxNumbers = (p.maxNumbers||10) + 1;
-        log(L[lang].logRaiseCap(p.name, p.maxNumbers));
-      }
-      // AUTO-STOP at personal cap (default 10) - only for black cards or after red card objective is handled
+      else { log(L[lang].logPickRed(p.name, card.value)); openObjectiveChoices(numberCount(p) >= (p.maxNumbers||10)); }
+      // REMOVED: numeric triggered abilities (10/20/30/40 remove zero; 5/15/25/35 raise cap)
+      // Auto-stop at personal cap for black cards or after handling red objective (handled in modal callback)
       if(card.color==='black' && numberCount(p) >= (p.maxNumbers||10)){
         p.stopped=true;
         log(lang==='it' ? ('ℹ '+p.name+' raggiunge '+(p.maxNumbers||10)+' carte: stop automatico') : ('ℹ '+p.name+' reaches '+(p.maxNumbers||10)+' cards: auto-stop'));
       }
+    } else if(card.kind==='special'){
+      // Specials: push to line but don't count towards number cap (numberCount counts only numbers)
+      p.line.push(card);
+      if(card.effect==='remove_zero'){
+        var removedTier = 0, foundIndex=-1;
+        for(var k=p.line.length-2;k>=0;k--){ // -2 to skip the special just added
+          var c=p.line[k]; if(c.kind==='zero'){ removedTier=c.tier; foundIndex=k; break; }
+        }
+        if(foundIndex>=0){
+          var z=p.line.splice(foundIndex,1)[0];
+          p.zeroPoints=Math.max(0,p.zeroPoints-removedTier);
+          state.deck.push(z); state.deck=shuffle(state.deck); updateDeckCount();
+          log(L[lang].logRemoveZero(p.name, (lang==='it'?L.it.specialR0:L.en.specialR0), removedTier));
+        } else {
+          log(L[lang].logNoZeroToRemove(p.name, (lang==='it'?L.it.specialR0:L.en.specialR0)));
+        }
+      } else if(card.effect==='raise_cap'){
+        p.maxNumbers=(p.maxNumbers||10)+1;
+        log(L[lang].logRaiseCap(p.name, p.maxNumbers));
+      }
+      // End turn as normal after special
     }
     refillMarketPhase();
     setTimeout(function(){ if(!isObjModalOpen()){ if(!maybeAutoEnd()){ nextActive(); renderAll(); } } else { renderAll(); } }, 10);
   }
   function stopPlayer(){ var p=state.players[state.active]; if(p.stopped) return; p.stopped=true; log(L[lang].logStop(p.name)); if(!maybeAutoEnd()){ nextActive(); renderAll(); } }
 
-  // Objectives - FIXED: Added parameter to handle auto-stop after red card
+  // Objectives
   function isObjModalOpen(){ return document.getElementById('objModal').style.display==='flex'; }
   function openObjectiveChoices(willBeAtLimit){
     state.pendingObjectiveChoice=state.active; if(state.objDeck.length<3) state.objDeck=buildObjectiveDeck();
     var opts=state.objDeck.splice(0,3); var box=document.getElementById('objChoices'); box.innerHTML='';
     opts.forEach(function(o,idx){
-      var btn=document.createElement('button'); btn.className='btn btn-secondary'; btn.textContent=(ICON_OBJ[o.type]||'🎯')+' '+tObj(o.type);
+      var btn=document.createElement('button'); btn.className='btn btn-secondary'; btn.textContent=(ICON_OBJ[o.type]||'🎯')+' '+o.type;
       btn.addEventListener('click',function(){
         var p=state.players[state.pendingObjectiveChoice];
         var need=2 + p.objectives.length;
-        p.objectives.push(o.type); log(L[lang].logGainObj(p.name, tObj(o.type), need));
+        p.objectives.push(o.type); log(L[lang].logGainObj(p.name, o.type, need));
         opts.forEach(function(x,j){ if(j!==idx) state.objDeck.push(x); });
-        closeObjectiveChoices(); 
-        // FIXED: Handle auto-stop after red card objective choice
-        if(willBeAtLimit){
-          p.stopped=true;
-          log(lang==='it' ? ('ℹ '+p.name+' raggiunge '+(p.maxNumbers||10)+' carte: stop automatico') : ('ℹ '+p.name+' reaches '+(p.maxNumbers||10)+' cards: auto-stop'));
-        }
-        if(!maybeAutoEnd()){ nextActive(); } 
+        closeObjectiveChoices();
+        if(willBeAtLimit){ p.stopped=true; log(lang==='it' ? ('ℹ '+p.name+' raggiunge '+(p.maxNumbers||10)+' carte: stop automatico') : ('ℹ '+p.name+' reaches '+(p.maxNumbers||10)+' cards: auto-stop')); }
+        if(!maybeAutoEnd()){ nextActive(); }
         renderAll();
       });
       box.appendChild(btn);
@@ -465,7 +443,7 @@
   }
   function closeObjectiveChoices(){ closeModal('objModal'); state.pendingObjectiveChoice=null; }
 
-  // Scoring & Rounds
+  // Scoring & Rounds (unchanged)
   function countMatches(cards, type){
     if(type==='Rosso') return cards.filter(function(c){return c.kind==='number' && c.color==='red';}).length;
     if(type==='Nero')  return cards.filter(function(c){return c.kind==='number' && c.color==='black';}).length;
@@ -497,22 +475,14 @@
   function nextRound(){
     closeModal('summaryModal');
     state.round+=1; state.active=0; state.deck=buildMainDeck(); state.objDeck=buildObjectiveDeck(); state.market=[]; state.lastZeroRecipient=null; state.lastEventWasZero=false; state.heldZeros=[]; state.totalDeck=state.deck.length;
-    // NEW RULE: jackpot based on point distance from leader
-    // Find the highest score (leader)
+    // Leaderboard-based jackpot bonus
     var maxScore = Math.max.apply(Math, state.players.map(function(p){ return p.totalScore; }));
-    
     state.players.forEach(function(p){
       var pointsGap = maxScore - p.totalScore;
-      var bonusCoins = Math.min(3, Math.floor(pointsGap / 10)); // Max 3 bonus coins
-      p.jackpot = 1 + bonusCoins; // Base 1 coin + bonus
-      
-      if(bonusCoins > 0){
-        log(lang==='it' ? 
-          (p.name + ' parte con ' + p.jackpot + ' monete (gap: ' + pointsGap + ' punti)') :
-          (p.name + ' starts with ' + p.jackpot + ' coins (gap: ' + pointsGap + ' points)'));
-      }
+      var bonusCoins = Math.min(3, Math.floor(pointsGap / 10));
+      p.jackpot = 1 + bonusCoins;
+      if(bonusCoins > 0){ log((lang==='it'? (p.name + ' parte con ' + p.jackpot + ' monete (gap: ' + pointsGap + ' punti)') : (p.name + ' starts with ' + p.jackpot + ' coins (gap: ' + pointsGap + ' points)'))); }
     });
-    
     refillMarketPhase();
     renderAll();
   }
@@ -540,23 +510,17 @@
         p.line.forEach(function(c){
           var sp=document.createElement('span'); sp.className='pill';
           if(c.kind==='number') sp.textContent=(c.color==='red'?'🔴 ':'⚫ ')+c.value;
-          else sp.textContent='💚 '+c.target+' '+Array(c.tier+1).join('•');
+          else if(c.kind==='zero') sp.textContent='💚 '+c.target+' '+Array(c.tier+1).join('•');
+          else sp.textContent=(c.effect==='remove_zero' ? (lang==='it'?L.it.specialR0:L.en.specialR0) : (lang==='it'?L.it.specialCap:L.en.specialCap));
           cardsBox.appendChild(sp);
         });
-      } else {
-        cardsBox.innerHTML='<span style="opacity:.6">'+noneCards+'</span>';
-      }
+      } else { cardsBox.innerHTML='<span style="opacity:.6">'+noneCards+'</span>'; }
 
       var objsTitle=document.createElement('div'); objsTitle.innerHTML='<b>'+L[lang].objsLbl+':</b>';
       var objsBox=document.createElement('div'); objsBox.className='mini'; objsBox.style.marginTop='4px';
       if(p.objectives.length){
-        p.objectives.forEach(function(t,i){
-          var sp=document.createElement('span'); sp.className='pill'; sp.textContent=(ICON_OBJ[t]||'🎯')+' '+tObj(t)+' (≥'+(2+i)+')';
-          objsBox.appendChild(sp);
-        });
-      } else {
-        objsBox.innerHTML='<span style="opacity:.6">'+noneObjs+'</span>';
-      }
+        p.objectives.forEach(function(t,i){ var sp=document.createElement('span'); sp.className='pill'; sp.textContent=(ICON_OBJ[t]||'🎯')+' '+t+' (≥'+(2+i)+')'; objsBox.appendChild(sp); });
+      } else { objsBox.innerHTML='<span style="opacity:.6">'+noneObjs+'</span>'; }
 
       div.appendChild(nameRow);
       div.appendChild(document.createElement('div')).style.height='6px';
@@ -571,11 +535,15 @@
   function renderMarket(){
     var m=document.getElementById('market'); m.innerHTML='';
     state.market.forEach(function(c,i){
-      var b=document.createElement('button'); b.className='card';
-      b.addEventListener('click', function(){ pickMarket(i); });
-      b.innerHTML = (c.kind==='number'
-        ? '<div class="ico">'+(c.color==='red'?'🔴':'⚫')+'</div><div class="val">'+c.value+'</div>'
-        : '<div class="ico">💚</div><div class="val">'+c.display+' '+c.target+'</div>');
+      var b=document.createElement('button'); b.className='card'; b.addEventListener('click', function(){ pickMarket(i); });
+      if(c.kind==='number'){
+        b.innerHTML = '<div class="ico">'+(c.color==='red'?'🔴':'⚫')+'</div><div class="val">'+c.value+'</div>';
+      } else if(c.kind==='zero'){
+        b.innerHTML = '<div class="ico">💚</div><div class="val">'+c.display+' '+c.target+'</div>';
+      } else { // special
+        var label = (c.effect==='remove_zero' ? (lang==='it'?L.it.specialR0:L.en.specialR0) : (lang==='it'?L.it.specialCap:L.en.specialCap));
+        b.innerHTML = '<div class="ico">🔷</div><div class="val">'+label+'</div>';
+      }
       m.appendChild(b);
     });
   }
@@ -594,12 +562,9 @@
     document.getElementById('btnStop').addEventListener('click', function(){ stopPlayer(); });
     document.getElementById('btnEndRound').addEventListener('click', function(){ endRound(); });
     document.getElementById('nextRoundBtn').addEventListener('click', function(){ nextRound(); });
-    Array.prototype.forEach.call(document.querySelectorAll('input[name="lang"]'), function(r){
-      r.addEventListener('change', function(e){ lang=e.target.value; setTexts(); renderAll(); });
-    });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="lang"]'), function(r){ r.addEventListener('change', function(e){ lang=e.target.value; setTexts(); renderAll(); }); });
     setTexts();
   });
   </script>
 </body>
 </html>
-      //
