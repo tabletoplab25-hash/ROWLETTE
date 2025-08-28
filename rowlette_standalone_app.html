@@ -233,8 +233,8 @@
   }
   function buildSpecialDeck(){
     var arr = [];
-    for(var i=0;i<4;i++){ arr.push({kind:'special', effect:'remove_zero', display:'R0'}); }
-    for(var j=0;j<4;j++){ arr.push({kind:'special', effect:'raise_cap', display:'+L'}); }
+    for(var i=0;i<3;i++){ arr.push({kind:'special', effect:'remove_zero', display:'R0'}); }
+    for(var j=0;j<3;j++){ arr.push({kind:'special', effect:'raise_cap', display:'+L'}); }
     // nuove carte blu: 2× Order ▲ e 2× Order ▼
     for(var u=0;u<2;u++){ arr.push({kind:'special', effect:'order_up', display:'▲'}); }
     for(var d=0;d<2;d++){ arr.push({kind:'special', effect:'order_down', display:'▼'}); }
