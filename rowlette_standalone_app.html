@@ -163,7 +163,9 @@
       logStop: function(p){ return '✋ '+p+' si ferma per questo round'; },
       logZeroBlocked: function(z,target,reason){ return '💚 '+z+' ('+target+') → rimischiata (' + reason + ')'; },
       cardsLbl: 'Carte', objsLbl:'Obiettivi',
-      specialR0: '🔷 Rimuovi 0', specialCap: '🔷 +Limite'
+      objNames: { Rosso:'Rosso', Nero:'Nero', Pari:'Pari', Dispari:'Dispari', Alto:'Alto', Basso:'Basso' },
+      specialR0: '🔷 Rimuovi 0', specialCap: '🔷 +Limite',
+      specialUp: '🔷 Ordine ▲', specialDown: '🔷 Ordine ▼'
     },
     en: {
       subtitle: 'Family push-your-luck • 3-card market • goals 🎯 • jackpot 💰 • zeros 💚 (MIN/MAX/YOU)',
@@ -183,7 +185,9 @@
       logStop: function(p){ return '✋ '+p+' stops for this round'; },
       logZeroBlocked: function(z,target,reason){ return '💚 '+z+' ('+target+') → shuffled back (' + reason + ')'; },
       cardsLbl: 'Cards', objsLbl:'Goals',
-      specialR0: '🔷 Remove 0', specialCap: '🔷 +Limit'
+      objNames: { Rosso:'Red', Nero:'Black', Pari:'Even', Dispari:'Odd', Alto:'High', Basso:'Low' },
+      specialR0: '🔷 Remove 0', specialCap: '🔷 +Limit',
+      specialUp: '🔷 Order ▲', specialDown: '🔷 Order ▼'
     }
   };
   function tObj(name){ return (L[lang].objNames && L[lang].objNames[name]) || name; }
@@ -231,6 +235,9 @@
     var arr = [];
     for(var i=0;i<4;i++){ arr.push({kind:'special', effect:'remove_zero', display:'R0'}); }
     for(var j=0;j<4;j++){ arr.push({kind:'special', effect:'raise_cap', display:'+L'}); }
+    // nuove carte blu: 2× Order ▲ e 2× Order ▼
+    for(var u=0;u<2;u++){ arr.push({kind:'special', effect:'order_up', display:'▲'}); }
+    for(var d=0;d<2;d++){ arr.push({kind:'special', effect:'order_down', display:'▼'}); }
     return shuffle(arr);
   }
   function buildNumberDeck(){ var arr=[]; for(var i=1;i<=40;i++){ arr.push({kind:'number', value:i, color:colorFor(i), isHigh:isHigh(i), isEven:isEven(i), display:String(i)}); } return arr; }
@@ -387,33 +394,29 @@
       p.line.push(card); state.lastEventWasZero=false;
       if(card.color==='black'){ p.jackpot+=1; log(L[lang].logPickBlack(p.name, card.value, p.jackpot)); }
       else { log(L[lang].logPickRed(p.name, card.value)); openObjectiveChoices(numberCount(p) >= (p.maxNumbers||10)); }
-      // REMOVED: numeric triggered abilities (10/20/30/40 remove zero; 5/15/25/35 raise cap)
-      // Auto-stop at personal cap for black cards or after handling red objective (handled in modal callback)
       if(card.color==='black' && numberCount(p) >= (p.maxNumbers||10)){
         p.stopped=true;
         log(lang==='it' ? ('ℹ '+p.name+' raggiunge '+(p.maxNumbers||10)+' carte: stop automatico') : ('ℹ '+p.name+' reaches '+(p.maxNumbers||10)+' cards: auto-stop'));
       }
     } else if(card.kind==='special'){
-      // Specials: push to line but don't count towards number cap (numberCount counts only numbers)
       p.line.push(card);
       if(card.effect==='remove_zero'){
         var removedTier = 0, foundIndex=-1;
-        for(var k=p.line.length-2;k>=0;k--){ // -2 to skip the special just added
-          var c=p.line[k]; if(c.kind==='zero'){ removedTier=c.tier; foundIndex=k; break; }
-        }
+        for(var k=p.line.length-2;k>=0;k--){ var c=p.line[k]; if(c.kind==='zero'){ removedTier=c.tier; foundIndex=k; break; } }
         if(foundIndex>=0){
           var z=p.line.splice(foundIndex,1)[0];
           p.zeroPoints=Math.max(0,p.zeroPoints-removedTier);
           state.deck.push(z); state.deck=shuffle(state.deck); updateDeckCount();
           log(L[lang].logRemoveZero(p.name, (lang==='it'?L.it.specialR0:L.en.specialR0), removedTier));
-        } else {
-          log(L[lang].logNoZeroToRemove(p.name, (lang==='it'?L.it.specialR0:L.en.specialR0)));
-        }
+        } else { log(L[lang].logNoZeroToRemove(p.name, (lang==='it'?L.it.specialR0:L.en.specialR0))); }
       } else if(card.effect==='raise_cap'){
         p.maxNumbers=(p.maxNumbers||10)+1;
         log(L[lang].logRaiseCap(p.name, p.maxNumbers));
+      } else if(card.effect==='order_up' || card.effect==='order_down'){
+        var label = (card.effect==='order_up' ? (lang==='it'?L.it.specialUp:L.en.specialUp) : (lang==='it'?L.it.specialDown:L.en.specialDown));
+        log(p.name + ' ' + (lang==='it' ? 'prende' : 'takes') + ' ' + label);
       }
-      // End turn as normal after special
+      // end of special
     }
     refillMarketPhase();
     setTimeout(function(){ if(!isObjModalOpen()){ if(!maybeAutoEnd()){ nextActive(); renderAll(); } } else { renderAll(); } }, 10);
@@ -426,11 +429,12 @@
     state.pendingObjectiveChoice=state.active; if(state.objDeck.length<3) state.objDeck=buildObjectiveDeck();
     var opts=state.objDeck.splice(0,3); var box=document.getElementById('objChoices'); box.innerHTML='';
     opts.forEach(function(o,idx){
-      var btn=document.createElement('button'); btn.className='btn btn-secondary'; btn.textContent=(ICON_OBJ[o.type]||'🎯')+' '+o.type;
+      var btn=document.createElement('button'); btn.className='btn btn-secondary';
+      btn.textContent=(ICON_OBJ[o.type]||'🎯')+' '+tObj(o.type);
       btn.addEventListener('click',function(){
         var p=state.players[state.pendingObjectiveChoice];
         var need=2 + p.objectives.length;
-        p.objectives.push(o.type); log(L[lang].logGainObj(p.name, o.type, need));
+        p.objectives.push(o.type); log(L[lang].logGainObj(p.name, tObj(o.type), need));
         opts.forEach(function(x,j){ if(j!==idx) state.objDeck.push(x); });
         closeObjectiveChoices();
         if(willBeAtLimit){ p.stopped=true; log(lang==='it' ? ('ℹ '+p.name+' raggiunge '+(p.maxNumbers||10)+' carte: stop automatico') : ('ℹ '+p.name+' reaches '+(p.maxNumbers||10)+' cards: auto-stop')); }
@@ -443,7 +447,7 @@
   }
   function closeObjectiveChoices(){ closeModal('objModal'); state.pendingObjectiveChoice=null; }
 
-  // Scoring & Rounds (unchanged)
+  // Scoring & Rounds - Added order bonus calculation
   function countMatches(cards, type){
     if(type==='Rosso') return cards.filter(function(c){return c.kind==='number' && c.color==='red';}).length;
     if(type==='Nero')  return cards.filter(function(c){return c.kind==='number' && c.color==='black';}).length;
@@ -454,11 +458,68 @@
     return 0;
   }
   function activeObjectives(p){ var a=0; for(var i=0;i<p.objectives.length;i++){ var need=2+i; var have=countMatches(p.line,p.objectives[i]); if(have>=need) a++; } return a; }
+  
+  function calculateOrderBonus(p){
+    var bonus = 0;
+    for(var i = 0; i < p.line.length; i++){
+      var card = p.line[i];
+      if(card.kind === 'special' && (card.effect === 'order_up' || card.effect === 'order_down')){
+        // Find the last number before this order card
+        var lastNum = null;
+        for(var j = i - 1; j >= 0; j--){
+          if(p.line[j].kind === 'number'){
+            lastNum = p.line[j].value;
+            break;
+          }
+        }
+        if(lastNum === null) continue; // No number before order card
+        
+        // Count sequence after order card
+        var sequenceBonus = 0;
+        var currentNum = lastNum;
+        var isAscending = card.effect === 'order_up';
+        
+        for(var k = i + 1; k < p.line.length; k++){
+          if(p.line[k].kind === 'number'){
+            var nextNum = p.line[k].value;
+            var correctOrder = isAscending ? (nextNum > currentNum) : (nextNum < currentNum);
+            if(correctOrder){
+              sequenceBonus += 2; // 2 points per correct card in sequence
+              currentNum = nextNum;
+            } else {
+              break; // Sequence broken, stop counting
+            }
+          }
+        }
+        bonus += sequenceBonus;
+      }
+    }
+    return bonus;
+  }
   function endRound(){
     var list=[];
     state.players.forEach(function(p){
-      var act=activeObjectives(p); var score=p.jackpot*act; if(p.exploded) score=Math.floor(score/2);
-      p.roundScore=score; p.totalScore+=score; list.push({name:p.name,round:score,total:p.totalScore});
+      var act=activeObjectives(p); 
+      var orderBonus = calculateOrderBonus(p);
+      var baseScore = p.jackpot * act;
+      var totalScore = baseScore + orderBonus;
+      if(p.exploded) totalScore = Math.floor(totalScore / 2);
+      
+      p.roundScore = totalScore; 
+      p.totalScore += totalScore; 
+      list.push({
+        name: p.name,
+        round: totalScore,
+        base: baseScore,
+        orderBonus: orderBonus,
+        total: p.totalScore
+      });
+      
+      // Log order bonus if any
+      if(orderBonus > 0){
+        log((lang==='it'? (p.name + ' ottiene ' + orderBonus + ' punti bonus ordine') : (p.name + ' gets ' + orderBonus + ' order bonus points')));
+      }
+      
       // RESET
       p.jackpot=0; p.objectives=[]; p.zeroPoints=0; p.line=[]; p.exploded=false; p.stopped=false; p.maxNumbers=10;
     });
@@ -466,7 +527,13 @@
   }
   function openSummary(list){
     var s=document.getElementById('summaryList');
-    s.innerHTML=list.map(function(x){ return '<div class="panel" style="margin:8px 0"><div style="display:flex;justify-content:space-between"><b>'+x.name+'</b><span>Round: <b>'+x.round+'</b> • Total: <b>'+x.total+'</b></span></div></div>'; }).join('');
+    s.innerHTML=list.map(function(x){ 
+      var details = '';
+      if(x.orderBonus > 0){
+        details = ' (Base: ' + x.base + ' + Order: ' + x.orderBonus + ')';
+      }
+      return '<div class="panel" style="margin:8px 0"><div style="display:flex;justify-content:space-between"><b>'+x.name+'</b><span>Round: <b>'+x.round+'</b>'+details+' • Total: <b>'+x.total+'</b></span></div></div>'; 
+    }).join('');
     openModal('summaryModal'); document.getElementById('summaryTitle').textContent=L[lang].roundEnd;
     var nextBtn=document.getElementById('nextRoundBtn'); var newBtn=document.getElementById('newGameBtn');
     if(state.round>=3){ nextBtn.classList.add('hidden'); newBtn.classList.remove('hidden'); }
@@ -511,7 +578,15 @@
           var sp=document.createElement('span'); sp.className='pill';
           if(c.kind==='number') sp.textContent=(c.color==='red'?'🔴 ':'⚫ ')+c.value;
           else if(c.kind==='zero') sp.textContent='💚 '+c.target+' '+Array(c.tier+1).join('•');
-          else sp.textContent=(c.effect==='remove_zero' ? (lang==='it'?L.it.specialR0:L.en.specialR0) : (lang==='it'?L.it.specialCap:L.en.specialCap));
+          else {
+            var label;
+            if (c.effect==='remove_zero') label = (lang==='it'?L.it.specialR0:L.en.specialR0);
+            else if (c.effect==='raise_cap') label = (lang==='it'?L.it.specialCap:L.en.specialCap);
+            else if (c.effect==='order_up') label = (lang==='it'?L.it.specialUp:L.en.specialUp);
+            else if (c.effect==='order_down') label = (lang==='it'?L.it.specialDown:L.en.specialDown);
+            else label = '🔷';
+            sp.textContent = label;
+          }
           cardsBox.appendChild(sp);
         });
       } else { cardsBox.innerHTML='<span style="opacity:.6">'+noneCards+'</span>'; }
@@ -519,7 +594,7 @@
       var objsTitle=document.createElement('div'); objsTitle.innerHTML='<b>'+L[lang].objsLbl+':</b>';
       var objsBox=document.createElement('div'); objsBox.className='mini'; objsBox.style.marginTop='4px';
       if(p.objectives.length){
-        p.objectives.forEach(function(t,i){ var sp=document.createElement('span'); sp.className='pill'; sp.textContent=(ICON_OBJ[t]||'🎯')+' '+t+' (≥'+(2+i)+')'; objsBox.appendChild(sp); });
+        p.objectives.forEach(function(t,i){ var sp=document.createElement('span'); sp.className='pill'; sp.textContent=(ICON_OBJ[t]||'🎯')+' '+tObj(t)+' (≥'+(2+i)+')'; objsBox.appendChild(sp); });
       } else { objsBox.innerHTML='<span style="opacity:.6">'+noneObjs+'</span>'; }
 
       div.appendChild(nameRow);
@@ -541,7 +616,12 @@
       } else if(c.kind==='zero'){
         b.innerHTML = '<div class="ico">💚</div><div class="val">'+c.display+' '+c.target+'</div>';
       } else { // special
-        var label = (c.effect==='remove_zero' ? (lang==='it'?L.it.specialR0:L.en.specialR0) : (lang==='it'?L.it.specialCap:L.en.specialCap));
+        var label;
+        if (c.effect==='remove_zero') label = (lang==='it'?L.it.specialR0:L.en.specialR0);
+        else if (c.effect==='raise_cap') label = (lang==='it'?L.it.specialCap:L.en.specialCap);
+        else if (c.effect==='order_up') label = (lang==='it'?L.it.specialUp:L.en.specialUp);
+        else if (c.effect==='order_down') label = (lang==='it'?L.it.specialDown:L.en.specialDown);
+        else label = '🔷';
         b.innerHTML = '<div class="ico">🔷</div><div class="val">'+label+'</div>';
       }
       m.appendChild(b);
