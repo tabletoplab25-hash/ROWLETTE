@@ -63,9 +63,30 @@
     <div id="lobby" class="panel">
       <h2 id="setupTitle">🎮 Player setup</h2>
       <div style="height:8px"></div>
-      <div id="playersInputs" class="grid grid-2"></div>
+      
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px">
+        <div>
+          <label id="playerNameLabel">Your name</label>
+          <input id="playerNameInput" type="text" value="You" placeholder="Your name" style="width:100%; padding:.6rem; border-radius:10px; border:0; background:rgba(255,255,255,.12); color:#fff; margin-bottom:8px">
+        </div>
+        <div>
+          <label id="aiCountLabel">AI opponents</label>
+          <select id="aiCountSelect" style="width:100%; padding:.6rem; border-radius:10px; border:0; background:rgba(255,255,255,.12); color:#fff; margin-bottom:8px">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+        <div>
+          <label id="difficultyLabel">Difficulty</label>
+          <select id="difficultySelect" style="width:100%; padding:.6rem; border-radius:10px; border:0; background:rgba(255,255,255,.12); color:#fff; margin-bottom:8px">
+            <option value="easy">Easy 🟢</option>
+            <option value="hard">Hard 🔴</option>
+          </select>
+        </div>
+      </div>
+      
       <div class="row" style="margin-top:12px">
-        <button id="btnAdd" class="btn btn-secondary" type="button">+ Add</button>
         <button id="btnStart" class="btn btn-primary" type="button">🚀 Start</button>
       </div>
     </div>
@@ -192,20 +213,26 @@
   };
   function tObj(name){ return (L[lang].objNames && L[lang].objNames[name]) || name; }
   function setTexts(){
-    document.getElementById('subtitle').textContent=L[lang].subtitle;
-    document.getElementById('setupTitle').textContent=L[lang].setup;
-    document.getElementById('btnAdd').textContent=L[lang].add;
-    document.getElementById('btnStart').textContent=L[lang].start;
-    document.getElementById('deckLabel').innerHTML=L[lang].deck+' <span id="deckCount">'+(state.deck?state.deck.length:0)+'</span>';
-    document.getElementById('turnLabel').textContent=L[lang].turn;
-    document.getElementById('btnStop').textContent=L[lang].stop;
-    document.getElementById('btnEndRound').textContent=L[lang].endRound;
-    document.getElementById('marketTitle').textContent=L[lang].marketTitle;
-    document.getElementById('marketHint').textContent=L[lang].marketHint;
-    document.getElementById('logTitle').textContent=L[lang].log;
-    document.getElementById('objModalTitle').textContent=L[lang].objTitle;
-    document.getElementById('summaryTitle').textContent=L[lang].roundEnd;
-    document.getElementById('nextRoundBtn').textContent=L[lang].nextRound;
+    var el;
+    if(el = document.getElementById('subtitle')) el.textContent=L[lang].subtitle;
+    if(el = document.getElementById('setupTitle')) el.textContent=L[lang].setup;
+    if(el = document.getElementById('btnAdd')) el.textContent=L[lang].add;
+    if(el = document.getElementById('btnStart')) el.textContent=L[lang].start;
+    if(el = document.getElementById('deckLabel')) el.innerHTML=L[lang].deck+' <span id="deckCount">'+(state.deck?state.deck.length:0)+'</span>';
+    if(el = document.getElementById('turnLabel')) el.textContent=L[lang].turn;
+    if(el = document.getElementById('btnStop')) el.textContent=L[lang].stop;
+    if(el = document.getElementById('btnEndRound')) el.textContent=L[lang].endRound;
+    if(el = document.getElementById('marketTitle')) el.textContent=L[lang].marketTitle;
+    if(el = document.getElementById('marketHint')) el.textContent=L[lang].marketHint;
+    if(el = document.getElementById('logTitle')) el.textContent=L[lang].log;
+    if(el = document.getElementById('objModalTitle')) el.textContent=L[lang].objTitle;
+    if(el = document.getElementById('summaryTitle')) el.textContent=L[lang].roundEnd;
+    if(el = document.getElementById('nextRoundBtn')) el.textContent=L[lang].nextRound;
+    
+    // Traduzioni per le label IA
+    if(el = document.getElementById('playerNameLabel')) el.textContent = (lang==='it'?'Il tuo nome':'Your name');
+    if(el = document.getElementById('aiCountLabel')) el.textContent = (lang==='it'?'Numero di avversari IA (1-3)':'AI opponents (1-3)');
+    if(el = document.getElementById('difficultyLabel')) el.textContent = (lang==='it'?'Difficoltà IA':'AI Difficulty');
   }
 
   // Types & utils
@@ -284,18 +311,61 @@
   }
 
   function startGame(){
-    ensureInputs();
-    var names = Array.prototype.map.call(inputsEl.querySelectorAll('input'), function(i){ return i.value.trim()||'Player'; });
-    if(names.length<2 || names.length>6){ alert(lang==='it'? 'Servono 2–6 giocatori':'2–6 players required'); return; }
-    state.players = names.map(function(n){ return { name:n, line:[], objectives:[], jackpot:1, zeroPoints:0, exploded:false, stopped:false, roundScore:0, totalScore:0, maxNumbers:10 }; });
-    state.round=1; state.active=0; state.deck = buildMainDeck(); state.objDeck = buildObjectiveDeck();
-    state.market=[]; state.heldZeros=[]; state.lastZeroRecipient=null; state.lastEventWasZero=false; state.totalDeck = state.deck.length;
+    var playerName = document.getElementById('playerNameInput').value.trim() || 'You';
+    var aiCount = parseInt(document.getElementById('aiCountSelect').value) || 1;
+    var difficulty = document.getElementById('difficultySelect').value || 'easy';
+    
+    // Creare giocatore umano
+    state.players = [{ 
+      name: playerName, 
+      line: [], 
+      objectives: [], 
+      jackpot: 1, 
+      zeroPoints: 0, 
+      exploded: false, 
+      stopped: false, 
+      roundScore: 0, 
+      totalScore: 0, 
+      maxNumbers: 10,
+      isAI: false,
+      difficulty: null
+    }];
+    
+    // Aggiungere avversari AI
+    var aiNames = ['Alice', 'Bob', 'Charlie'];
+    for(var i = 0; i < aiCount; i++){
+      state.players.push({ 
+        name: aiNames[i], 
+        line: [], 
+        objectives: [], 
+        jackpot: 1, 
+        zeroPoints: 0, 
+        exploded: false, 
+        stopped: false, 
+        roundScore: 0, 
+        totalScore: 0, 
+        maxNumbers: 10,
+        isAI: true,
+        difficulty: difficulty
+      });
+    }
+    
+    state.round = 1; 
+    state.active = 0; 
+    state.deck = buildMainDeck(); 
+    state.objDeck = buildObjectiveDeck();
+    state.market = []; 
+    state.heldZeros = []; 
+    state.lastZeroRecipient = null; 
+    state.lastEventWasZero = false; 
+    state.totalDeck = state.deck.length;
 
     document.getElementById('lobby').classList.add('hidden');
     document.getElementById('game').classList.remove('hidden');
 
-    refillMarketPhase(); renderAll();
-    log((lang==='it'?'Partita iniziata: ':'Game started: ')+names.join(', '));
+    refillMarketPhase(); 
+    renderAll();
+    log((lang==='it'?'Partita iniziata: ':'Game started: ') + state.players.map(function(p){ return p.name + (p.isAI ? ' (IA)' : ''); }).join(', '));
   }
 
   // Helpers & eligibility
@@ -382,14 +452,149 @@
   function updateDeckCount(){ var el=document.getElementById('deckCount'); if(!el) return; el.textContent = state.deck.length + ' / ' + state.totalDeck; }
 
   // Turn helpers
-  function allStopped(){ return state.players.every(function(p){ return p.stopped; }); }
-  function nextActive(){ for(var step=1; step<=state.players.length; step++){ var idx=(state.active+step)%state.players.length; if(!state.players[idx].stopped){ state.active=idx; return true; } } return false; }
-  function maybeAutoEnd(){ if(allStopped() || state.deck.length===0){ endRound(); return true; } return false; }
+  function allStopped(){ return state.players && state.players.length > 0 && state.players.every(function(p){ return p.stopped; }); }
+  function nextActive(){ 
+    if(!state || !state.players || state.players.length === 0) return false;
+    for(var step=1; step<=state.players.length; step++){ 
+      var idx=(state.active+step)%state.players.length; 
+      if(state.players[idx] && !state.players[idx].stopped){ 
+        state.active=idx; 
+        // Se è un bot, esegui la mossa automaticamente dopo un delay
+        if(state.players[idx] && state.players[idx].isAI){
+          setTimeout(function(){ 
+            if(state && state.players && state.active < state.players.length){
+              makeAIMove(); 
+            }
+          }, 800);
+        }
+        return true; 
+      } 
+    } 
+    return false; 
+  }
+  function maybeAutoEnd(){ 
+    if(allStopped() || (state && state.deck && state.deck.length === 0)){ 
+      endRound(); 
+      return true; 
+    } 
+    return false; 
+  }
+
+  function makeAIMove(){
+    if(!state || !state.players || state.active >= state.players.length) return;
+    
+    var p = state.players[state.active];
+    if(!p || !p.isAI) return;
+    if(p.stopped || p.exploded) { nextActive(); renderAll(); return; }
+    
+    var shouldStop = evaluateAIDecision(p);
+    if(shouldStop){
+      stopPlayer();
+    } else {
+      // Scegliere quale carta prendere
+      var bestIdx = selectBestCard(p);
+      if(bestIdx >= 0 && bestIdx < state.market.length){
+        pickMarket(bestIdx);
+      } else {
+        stopPlayer();
+      }
+    }
+  }
+  
+  function evaluateAIDecision(p){
+    if(!p) return true;
+    var threshold = (p.difficulty === 'easy') ? 5 : 6;
+    var cardsUntilLimit = (p.maxNumbers || 10) - numberCount(p);
+    var deckRatio = state.deck.length / Math.max(1, state.totalDeck);
+    
+    if(p.difficulty === 'easy'){
+      if(p.jackpot >= threshold) return true;
+      if(cardsUntilLimit <= 1) return true;
+      if(deckRatio < 0.15 && p.jackpot >= 2) return true;
+      return false;
+    } else { // hard
+      var riskScore = 0;
+      if(p.jackpot >= threshold) riskScore += 3;
+      if(cardsUntilLimit <= 1) riskScore += 3;
+      if(deckRatio < 0.2) riskScore += 2;
+      if(p.objectives && p.objectives.length >= 2) riskScore -= 1;
+      return riskScore >= 5;
+    }
+  }
+  
+  function selectBestCard(p){
+    if(!p || state.market.length === 0) return -1;
+    
+    var cardsUntilLimit = (p.maxNumbers || 10) - numberCount(p);
+    
+    var scores = state.market.map(function(card, idx){
+      var score = 0;
+      
+      if(card.kind === 'special'){
+        if(card.effect === 'raise_cap'){
+          score = cardsUntilLimit <= 2 ? 100 : 30;
+        } else if(card.effect === 'remove_zero'){
+          score = p.zeroPoints >= 4 ? 80 : 10;
+        } else {
+          score = 5;
+        }
+      } else if(card.kind === 'zero'){
+        score = 20;
+      } else if(card.kind === 'number'){
+        // Preferire numeri che matchano gli obiettivi
+        var objectiveMatches = 0;
+        if(p.objectives && p.objectives.length > 0){
+          p.objectives.forEach(function(obj){
+            if(matchesObjectiveAI(card, obj)) objectiveMatches++;
+          });
+        }
+        score = objectiveMatches > 0 ? 50 + objectiveMatches * 20 : 15;
+        
+        // Preferire numeri neri (non aprono la modal scelta obiettivo)
+        if(card.color === 'black') score += 10;
+      }
+      
+      return score;
+    });
+    
+    var maxScore = Math.max.apply(null, scores);
+    var bestIndices = [];
+    scores.forEach(function(s, i){ if(s === maxScore) bestIndices.push(i); });
+    
+    return bestIndices[Math.floor(Math.random() * bestIndices.length)];
+  }
+  
+  function matchesObjectiveAI(card, objType){
+    if(!card || card.kind !== 'number') return false;
+    if(!objType) return false;
+    if(objType === 'Rosso') return card.color === 'red';
+    if(objType === 'Nero') return card.color === 'black';
+    if(objType === 'Pari') return card.value % 2 === 0;
+    if(objType === 'Dispari') return card.value % 2 === 1;
+    if(objType === 'Basso') return card.value <= 20;
+    if(objType === 'Alto') return card.value > 20;
+    return false;
+  }
+  
+  function makeAIObjectiveChoice(){
+    var p = state.players[state.active];
+    if(!p.isAI) return;
+    
+    var choices = document.querySelectorAll('#objChoices .btn');
+    if(choices.length === 0) return;
+    
+    // Scegliere un obiettivo casuale (potrebbe essere più intelligente)
+    var chosenIdx = Math.floor(Math.random() * choices.length);
+    chooseGoal(chosenIdx);
+  }
 
   // Actions
   function pickMarket(i){
+    if(!state || !state.players || state.active >= state.players.length) return;
     if(state.players[state.active].stopped){ if(nextActive()) renderAll(); return; }
-    var card = state.market.splice(i,1)[0]; var p = state.players[state.active];
+    var card = state.market.splice(i,1)[0]; 
+    var p = state.players[state.active];
+    if(!p || !card) return;
     if(card.kind==='number'){
       p.line.push(card); state.lastEventWasZero=false;
       if(card.color==='black'){ p.jackpot+=1; log(L[lang].logPickBlack(p.name, card.value, p.jackpot)); }
@@ -421,18 +626,27 @@
     refillMarketPhase();
     setTimeout(function(){ if(!isObjModalOpen()){ if(!maybeAutoEnd()){ nextActive(); renderAll(); } } else { renderAll(); } }, 10);
   }
-  function stopPlayer(){ var p=state.players[state.active]; if(p.stopped) return; p.stopped=true; log(L[lang].logStop(p.name)); if(!maybeAutoEnd()){ nextActive(); renderAll(); } }
+  function stopPlayer(){ 
+    if(!state || !state.players || state.active >= state.players.length) return;
+    var p=state.players[state.active]; 
+    if(!p || p.stopped) return; 
+    p.stopped=true; 
+    log(L[lang].logStop(p.name)); 
+    if(!maybeAutoEnd()){ nextActive(); renderAll(); } 
+  }
 
   // Objectives
   function isObjModalOpen(){ return document.getElementById('objModal').style.display==='flex'; }
   function openObjectiveChoices(willBeAtLimit){
+    if(!state || !state.players) return;
     state.pendingObjectiveChoice=state.active; if(state.objDeck.length<3) state.objDeck=buildObjectiveDeck();
-    var opts=state.objDeck.splice(0,3); var box=document.getElementById('objChoices'); box.innerHTML='';
+    var opts=state.objDeck.splice(0,3); var box=document.getElementById('objChoices'); if(!box) return; box.innerHTML='';
     opts.forEach(function(o,idx){
       var btn=document.createElement('button'); btn.className='btn btn-secondary';
       btn.textContent=(ICON_OBJ[o.type]||'🎯')+' '+tObj(o.type);
       btn.addEventListener('click',function(){
         var p=state.players[state.pendingObjectiveChoice];
+        if(!p || !p.objectives) return;
         var need=2 + p.objectives.length;
         p.objectives.push(o.type); log(L[lang].logGainObj(p.name, tObj(o.type), need));
         opts.forEach(function(x,j){ if(j!==idx) state.objDeck.push(x); });
@@ -444,11 +658,23 @@
       box.appendChild(btn);
     });
     openModal('objModal');
+    
+    // Se è un bot, far scegliere automaticamente
+    if(state.players && state.players[state.active] && state.players[state.active].isAI){
+      setTimeout(function(){
+        var buttons = document.querySelectorAll('#objChoices .btn');
+        if(buttons.length > 0){
+          var randomBtn = buttons[Math.floor(Math.random() * buttons.length)];
+          randomBtn.click();
+        }
+      }, 600);
+    }
   }
   function closeObjectiveChoices(){ closeModal('objModal'); state.pendingObjectiveChoice=null; }
 
   // Scoring & Rounds - Added order bonus calculation
   function countMatches(cards, type){
+    if(!cards || !type) return 0;
     if(type==='Rosso') return cards.filter(function(c){return c.kind==='number' && c.color==='red';}).length;
     if(type==='Nero')  return cards.filter(function(c){return c.kind==='number' && c.color==='black';}).length;
     if(type==='Pari')  return cards.filter(function(c){return c.kind==='number' && c.isEven;}).length;
@@ -457,9 +683,19 @@
     if(type==='Basso') return cards.filter(function(c){return c.kind==='number' && !c.isHigh;}).length;
     return 0;
   }
-  function activeObjectives(p){ var a=0; for(var i=0;i<p.objectives.length;i++){ var need=2+i; var have=countMatches(p.line,p.objectives[i]); if(have>=need) a++; } return a; }
+  function activeObjectives(p){ 
+    if(!p || !p.objectives) return 0;
+    var a=0; 
+    for(var i=0;i<p.objectives.length;i++){ 
+      var need=2+i; 
+      var have=countMatches(p.line,p.objectives[i]); 
+      if(have>=need) a++; 
+    } 
+    return a; 
+  }
   
   function calculateOrderBonus(p){
+    if(!p || !p.line) return 0;
     var bonus = 0;
     for(var i = 0; i < p.line.length; i++){
       var card = p.line[i];
@@ -497,6 +733,7 @@
     return bonus;
   }
   function endRound(){
+    if(!state || !state.players) return;
     var list=[];
     state.players.forEach(function(p){
       var act=activeObjectives(p); 
@@ -526,7 +763,9 @@
     openSummary(list);
   }
   function openSummary(list){
+    if(!state || !list) return;
     var s=document.getElementById('summaryList');
+    if(!s) return;
     s.innerHTML=list.map(function(x){ 
       var details = '';
       if(x.orderBonus > 0){
@@ -534,12 +773,18 @@
       }
       return '<div class="panel" style="margin:8px 0"><div style="display:flex;justify-content:space-between"><b>'+x.name+'</b><span>Round: <b>'+x.round+'</b>'+details+' • Total: <b>'+x.total+'</b></span></div></div>'; 
     }).join('');
-    openModal('summaryModal'); document.getElementById('summaryTitle').textContent=L[lang].roundEnd;
-    var nextBtn=document.getElementById('nextRoundBtn'); var newBtn=document.getElementById('newGameBtn');
-    if(state.round>=3){ nextBtn.classList.add('hidden'); newBtn.classList.remove('hidden'); }
-    else { nextBtn.classList.remove('hidden'); newBtn.classList.add('hidden'); }
+    openModal('summaryModal'); 
+    var titleEl = document.getElementById('summaryTitle');
+    if(titleEl) titleEl.textContent=L[lang].roundEnd;
+    var nextBtn=document.getElementById('nextRoundBtn'); 
+    var newBtn=document.getElementById('newGameBtn');
+    if(nextBtn && newBtn){
+      if(state.round>=3){ nextBtn.classList.add('hidden'); newBtn.classList.remove('hidden'); }
+      else { nextBtn.classList.remove('hidden'); newBtn.classList.add('hidden'); }
+    }
   }
   function nextRound(){
+    if(!state || !state.players) return;
     closeModal('summaryModal');
     state.round+=1; state.active=0; state.deck=buildMainDeck(); state.objDeck=buildObjectiveDeck(); state.market=[]; state.lastZeroRecipient=null; state.lastEventWasZero=false; state.heldZeros=[]; state.totalDeck=state.deck.length;
     // Leaderboard-based jackpot bonus
@@ -555,15 +800,25 @@
   }
 
   // Rendering
-  function renderAll(){ document.getElementById('roundEl').textContent=state.round; if(state.players[state.active]) document.getElementById('activeName').textContent=state.players[state.active].name; renderPlayers(); renderMarket(); updateDeckCount(); }
+  function renderAll(){ 
+    if(!state || !state.players) return;
+    document.getElementById('roundEl').textContent=state.round; 
+    if(state.players[state.active]) document.getElementById('activeName').textContent=state.players[state.active].name; 
+    renderPlayers(); 
+    renderMarket(); 
+    updateDeckCount(); 
+  }
   function renderPlayers(){
-    var area=document.getElementById('playersArea'); area.innerHTML='';
+    if(!state || !state.players) return;
+    var area=document.getElementById('playersArea'); 
+    if(!area) return;
+    area.innerHTML='';
     state.players.forEach(function(p,idx){
       var div=document.createElement('div'); var cls=['player']; if(idx===state.active) cls.push('current'); if(p.exploded) cls.push('exploded'); if(p.stopped) cls.push('stopped'); div.className=cls.join(' ');
       var noneCards=(L[lang].cardsLbl==='Cards'?'None':'Nessuna'); var noneObjs=(L[lang].objsLbl==='Goals'?'None':'Nessuno');
 
       var nameRow=document.createElement('div'); nameRow.className='row'; nameRow.style.alignItems='center'; nameRow.style.justifyContent='space-between';
-      var nameEl=document.createElement('div'); nameEl.className='name'; nameEl.innerHTML = p.name+(p.stopped?' — <span style="color:#fde68a">STOP</span>':'')+(p.exploded?' — <span style="color:#fecaca">💥</span>':'');
+      var nameEl=document.createElement('div'); nameEl.className='name'; nameEl.innerHTML = p.name+(p.isAI?' <span style="font-size:.75rem;background:#9333ea;padding:.2rem .4rem;border-radius:4px;margin-left:6px">'+(p.difficulty==='easy'?'IA Easy':'IA Hard')+'</span>':'')+(p.stopped?' — <span style="color:#fde68a">STOP</span>':'')+(p.exploded?' — <span style="color:#fecaca">💥</span>':'');
       var stats=document.createElement('div'); stats.innerHTML = '<span class="stat">💰 '+p.jackpot+'</span>'+
         '<span class="stat" title="'+(lang==='it'?'Limite carte':'Card limit')+'">🔢 '+(p.maxNumbers||10)+'</span>'+
         '<span class="stat">⚡ '+p.zeroPoints+'/6</span>'+
@@ -593,7 +848,7 @@
 
       var objsTitle=document.createElement('div'); objsTitle.innerHTML='<b>'+L[lang].objsLbl+':</b>';
       var objsBox=document.createElement('div'); objsBox.className='mini'; objsBox.style.marginTop='4px';
-      if(p.objectives.length){
+      if(p.objectives && p.objectives.length){
         p.objectives.forEach(function(t,i){ var sp=document.createElement('span'); sp.className='pill'; sp.textContent=(ICON_OBJ[t]||'🎯')+' '+tObj(t)+' (≥'+(2+i)+')'; objsBox.appendChild(sp); });
       } else { objsBox.innerHTML='<span style="opacity:.6">'+noneObjs+'</span>'; }
 
@@ -608,7 +863,10 @@
     });
   }
   function renderMarket(){
-    var m=document.getElementById('market'); m.innerHTML='';
+    if(!state || !state.market) return;
+    var m=document.getElementById('market'); 
+    if(!m) return;
+    m.innerHTML='';
     state.market.forEach(function(c,i){
       var b=document.createElement('button'); b.className='card'; b.addEventListener('click', function(){ pickMarket(i); });
       if(c.kind==='number'){
@@ -627,17 +885,31 @@
       m.appendChild(b);
     });
   }
-  function renderLog(){ var l=document.getElementById('log'); l.innerHTML=state.log.map(function(x){ return '<div style="padding:4px 0">'+x+'</div>'; }).join(''); }
+  function renderLog(){ 
+    if(!state || !state.log) return;
+    var l=document.getElementById('log'); 
+    if(!l) return;
+    l.innerHTML=state.log.map(function(x){ return '<div style="padding:4px 0">'+x+'</div>'; }).join(''); 
+  }
 
   // Modals
-  function openModal(id){ document.getElementById('overlay').style.display='block'; var el=document.getElementById(id); el.style.display='flex'; }
-  function closeModal(id){ document.getElementById('overlay').style.display='none'; var el=document.getElementById(id); el.style.display='none'; }
+  function openModal(id){ 
+    var overlay = document.getElementById('overlay');
+    if(!overlay) return;
+    overlay.style.display='block'; 
+    var el=document.getElementById(id); 
+    if(el) el.style.display='flex'; 
+  }
+  function closeModal(id){ 
+    var overlay = document.getElementById('overlay');
+    if(!overlay) return;
+    overlay.style.display='none'; 
+    var el=document.getElementById(id); 
+    if(el) el.style.display='none'; 
+  }
 
   // Boot
   document.addEventListener('DOMContentLoaded', function(){
-    inputsEl = document.getElementById('playersInputs');
-    addPlayer('Anna'); addPlayer('Luca'); addPlayer('Marco');
-    document.getElementById('btnAdd').addEventListener('click', function(){ addPlayer(); });
     document.getElementById('btnStart').addEventListener('click', function(){ startGame(); });
     document.getElementById('btnStop').addEventListener('click', function(){ stopPlayer(); });
     document.getElementById('btnEndRound').addEventListener('click', function(){ endRound(); });
