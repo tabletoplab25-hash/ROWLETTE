@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📖 Rowlette - Rulebook</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial;
+      background: linear-gradient(135deg, #0ea5e9 0%, #7c3aed 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .title { font-size: 3rem; font-weight: 900; margin: 0 0 8px 0; text-align: center; }
+    .subtitle { text-align: center; opacity: 0.9; font-size: 1.1rem; margin-bottom: 24px; }
+    .header { margin-bottom: 32px; }
+    
+    .panel {
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+      margin-bottom: 20px;
+    }
+    
+    h2 { font-size: 1.8rem; margin-top: 0; margin-bottom: 16px; border-bottom: 2px solid rgba(255, 255, 255, 0.3); padding-bottom: 12px; }
+    h3 { font-size: 1.3rem; margin-top: 20px; margin-bottom: 12px; }
+    h4 { font-size: 1.1rem; margin-top: 16px; margin-bottom: 8px; }
+    
+    p { line-height: 1.6; margin: 10px 0; }
+    ul, ol { line-height: 1.8; margin: 12px 0; padding-left: 24px; }
+    li { margin: 8px 0; }
+    
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin: 16px 0; }
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      color: #111;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100px;
+      border: 2px solid transparent;
+    }
+    .card .ico { font-size: 2.5rem; margin-bottom: 4px; }
+    .card .val { font-weight: 800; font-size: 0.9rem; }
+    .card .desc { font-size: 0.75rem; opacity: 0.6; margin-top: 4px; }
+    
+    .example-box {
+      background: rgba(34, 197, 94, 0.15);
+      border-left: 4px solid #22c55e;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .example-box h4 { color: #86efac; margin-top: 0; }
+    
+    .warning-box {
+      background: rgba(239, 68, 68, 0.15);
+      border-left: 4px solid #ef4444;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .warning-box h4 { color: #fca5a5; margin-top: 0; }
+    
+    .score-example {
+      background: rgba(59, 130, 246, 0.15);
+      border-left: 4px solid #3b82f6;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      font-family: 'Courier New', monospace;
+    }
+    .score-example h4 { color: #93c5fd; margin-top: 0; }
+    
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .row.centered { justify-content: center; }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 0.9rem;
+      margin: 4px 2px;
+    }
+    
+    .stat-box {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      flex: 1;
+      min-width: 140px;
+    }
+    .stat-box .number { font-size: 2rem; font-weight: 900; color: #fbbf24; }
+    .stat-box .label { font-size: 0.9rem; opacity: 0.8; }
+    
+    .phase { background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px; margin: 12px 0; }
+    .phase-number { display: inline-block; background: #10b981; color: #fff; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 900; margin-right: 8px; }
+    
+    .toc {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .toc ul { list-style: none; padding-left: 0; }
+    .toc a { color: #fbbf24; text-decoration: none; transition: opacity 0.2s; }
+    .toc a:hover { opacity: 0.8; }
+    
+    .logo { text-align: center; font-size: 4rem; margin-bottom: 16px; }
+    
+    @media (max-width: 768px) {
+      .title { font-size: 2rem; }
+      .card-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+      .panel { padding: 16px; }
+      h2 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo">🎰</div>
+      <h1 class="title">ROWLETTE</h1>
+      <p class="subtitle">📖 Official Rulebook</p>
+    </div>
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="panel toc">
+      <h3>📑 Table of Contents</h3>
+      <ul>
+        <li><a href="#intro">Introduction</a></li>
+        <li><a href="#components">Components</a></li>
+        <li><a href="#setup">Setup</a></li>
+        <li><a href="#turn">Turn Structure</a></li>
+        <li><a href="#cards">The Cards</a></li>
+        <li><a href="#zeros">Zero Assignment</a></li>
+        <li><a href="#goals">Goals & Scoring</a></li>
+        <li><a href="#endround">End of Round & Final Score</a></li>
+        <li><a href="#examples">Detailed Examples</a></li>
+      </ul>
+    </div>
+
+    <!-- INTRODUCTION -->
+    <div class="panel" id="intro">
+      <h2>🎮 Introduction</h2>
+      <p><strong>Rowlette</strong> is a fast-paced push-your-luck card game with a roulette vibe. Each player builds a personal line of number cards to activate Goals and multiply a jackpot.</p>
+      
+      <div class="row centered" style="justify-content: space-around; margin: 20px 0;">
+        <div class="stat-box">
+          <div class="number">2-4</div>
+          <div class="label">Players</div>
+        </div>
+        <div class="stat-box">
+          <div class="number">20-30</div>
+          <div class="label">Minutes</div>
+        </div>
+        <div class="stat-box">
+          <div class="number">8+</div>
+          <div class="label">Ages</div>
+        </div>
+        <div class="stat-box">
+          <div class="number">3</div>
+          <div class="label">Rounds</div>
+        </div>
+      </div>
+
+      <h3>Game Concept</h3>
+      <ul>
+        <li><strong>Black cards</strong> ⚫ → increase your jackpot (+1 coin)</li>
+        <li><strong>Red cards</strong> 🔴 → let you choose a Goal</li>
+        <li><strong>Green zeros</strong> 💚 → raise your zero-track; at 6+ points you explode!</li>
+        <li><strong>Blue Special cards</strong> 🔷 → special effects (remove zero, raise limit, order chains)</li>
+      </ul>
+    </div>
+
+    <!-- COMPONENTS -->
+    <div class="panel" id="components">
+      <h2>📦 Components</h2>
+      
+      <h3>1. Number Cards (40 cards)</h3>
+      <p>Numbered 1 to 40. Color alternates every 2 numbers: 1-2 red, 3-4 black, 5-6 red, etc.</p>
+      <div class="card-grid">
+        <div class="card"><div class="ico">🔴</div><div class="val">1-2</div><div class="desc">Red</div></div>
+        <div class="card"><div class="ico">⚫</div><div class="val">3-4</div><div class="desc">Black</div></div>
+        <div class="card"><div class="ico">🔴</div><div class="val">5-6</div><div class="desc">Red</div></div>
+        <div class="card"><div class="ico">⚫</div><div class="val">7-8</div><div class="desc">Black</div></div>
+        <div class="card"><div class="ico">...</div><div class="val">...</div><div class="desc">continues</div></div>
+      </div>
+
+      <h3>2. Zero Cards (18 cards) 💚</h3>
+      <p>Raise your zero-track. Reach 6+ zero-points and you explode, halving your score!</p>
+      <div class="card-grid">
+        <div class="card"><div class="ico">💚</div><div class="val">000 MAX</div><div class="desc">×3 | +3 pts</div></div>
+        <div class="card"><div class="ico">💚</div><div class="val">00 MIN</div><div class="desc">×7 | +2 pts</div></div>
+        <div class="card"><div class="ico">💚</div><div class="val">0 MAX</div><div class="desc">×4 | +1 pt</div></div>
+        <div class="card"><div class="ico">💚</div><div class="val">0 YOU</div><div class="desc">×4 | +1 pt</div></div>
+      </div>
+
+      <h3>3. Special Cards (10 cards) 🔷</h3>
+      <div class="card-grid">
+        <div class="card"><div class="ico">🔷</div><div class="val">Remove 0</div><div class="desc">×3</div></div>
+        <div class="card"><div class="ico">🔷</div><div class="val">+Limit</div><div class="desc">×3</div></div>
+        <div class="card"><div class="ico">🔷</div><div class="val">Order ▲</div><div class="desc">×2</div></div>
+        <div class="card"><div class="ico">🔷</div><div class="val">Order ▼</div><div class="desc">×2</div></div>
+      </div>
+
+      <h3>4. Goal Cards (24 cards) 🎯</h3>
+      <p>6 types, 4 copies of each. Activated when you meet their thresholds.</p>
+      <div class="card-grid">
+        <div class="card"><div class="ico">🔴</div><div class="val">Red</div><div class="desc">Red cards</div></div>
+        <div class="card"><div class="ico">⚫</div><div class="val">Black</div><div class="desc">Black cards</div></div>
+        <div class="card"><div class="ico">2️⃣</div><div class="val">Even</div><div class="desc">Even numbers</div></div>
+        <div class="card"><div class="ico">1️⃣</div><div class="val">Odd</div><div class="desc">Odd numbers</div></div>
+        <div class="card"><div class="ico">⬆️</div><div class="val">High</div><div class="desc">21-40</div></div>
+        <div class="card"><div class="ico">⬇️</div><div class="val">Low</div><div class="desc">1-20</div></div>
+      </div>
+    </div>
+
+    <!-- SETUP -->
+    <div class="panel" id="setup">
+      <h2>⚙️ Setup</h2>
+      <ol>
+        <li><strong>Shuffle the main deck</strong>: numbers + zeros + special cards. Reveal 3 cards as the initial market.</li>
+        <li><strong>Each player starts with</strong>:
+          <ul>
+            <li>An empty personal line</li>
+            <li>A jackpot of 1 (Round 1)</li>
+            <li>Zero-track at 0</li>
+          </ul>
+        </li>
+        <li><strong>Randomly choose the first player</strong>.</li>
+      </ol>
+
+      <h3>Starting Jackpot in Rounds 2 & 3</h3>
+      <p>Use this formula based on the leaderboard gap:</p>
+      <div class="score-example">
+        <h4>⚡ Formula</h4>
+        <p style="margin: 0;">gap = leader_total − your_total</p>
+        <p style="margin: 8px 0 0 0;"><strong>starting_jackpot = 1 + min(3, ⌊gap / 10⌋)</strong></p>
+        <p style="margin: 8px 0 0 0;"><em>Example: if you're 25 points behind, your jackpot is 1 + min(3, 2) = 3</em></p>
+      </div>
+
+      <p>Jackpot ranges from 1 to 4, giving a small boost to players who are behind.</p>
+    </div>
+
+    <!-- TURN STRUCTURE -->
+    <div class="panel" id="turn">
+      <h2>🎲 Turn Structure</h2>
+      <p><strong>At the start of your turn, choose:</strong></p>
+
+      <div class="phase">
+        <div class="phase-number">A</div>
+        <strong>STOP</strong> — Leave the round. You can't be hit by zeros anymore.
+      </div>
+
+      <div class="phase">
+        <div class="phase-number">B</div>
+        <strong>PLAY</strong> — Take 1 card from the 3-card market and add it to your line. Then refill the market back to 3 cards.
+      </div>
+
+      <h3>Effects of Number Cards</h3>
+      <h4>⚫ BLACK card</h4>
+      <p>Add +1 coin to your jackpot.</p>
+
+      <h4>🔴 RED card</h4>
+      <p>Draw 3 Goal cards, keep 1, and return the other 2 to the bottom of the Goal deck.</p>
+
+      <h3>⚠️ Auto-Stop Limit</h3>
+      <p>When you reach 10 number cards in your line, <strong>you immediately STOP</strong>. Your round ends (but the market keeps refilling—a zero might still hit you).</p>
+    </div>
+
+    <!-- SPECIAL CARDS -->
+    <div class="panel" id="cards">
+      <h2>🔷 Special Cards</h2>
+      <p>Special cards are support cards. <strong>They don't count as numbers</strong> and are tucked under other cards, so your "last visible number" remains a number.</p>
+
+      <h3>1. Remove 0 (R0)</h3>
+      <ul>
+        <li>Immediately remove the <strong>most recent zero</strong> from your line.</li>
+        <li>Reduce your zero-track by that zero's value (e.g., 000 = -3).</li>
+        <li>Shuffle that zero back into the deck.</li>
+        <li><strong>One-shot use</strong> per round (discard after use).</li>
+      </ul>
+
+      <h3>2. +Limit (+L)</h3>
+      <ul>
+        <li>Increase your number-card limit by +1 for this round (from 10 to 11, etc.).</li>
+        <li>Tuck this card under your jackpot marker as a reminder.</li>
+      </ul>
+
+      <h3>3 & 4. Order ▲ / ▼</h3>
+      <ul>
+        <li>Tuck this card under your most recent number.</li>
+        <li>If you don't have a number yet, tuck it under your first number when you take one.</li>
+        <li><strong>Bonus scoring</strong>: For each number that follows the order (▲ = strictly increasing, ▼ = strictly decreasing), earn +2 points per step until the chain breaks.</li>
+        <li>Order bonuses are <strong>added after jackpot calculation</strong> and <strong>not multiplied</strong>.</li>
+      </ul>
+
+      <div class="example-box">
+        <h4>✅ Example of Order ▲</h4>
+        <p>You have: 8 → tuck ▲ under 8 → take 13 → take 26 → take 38 → take 25</p>
+        <p><strong>Order score:</strong> +2 (for 13) +2 (for 26) +2 (for 38) = <strong>+6 bonus</strong> (chain breaks at 25)</p>
+      </div>
+    </div>
+
+    <!-- ZEROS -->
+    <div class="panel" id="zeros">
+      <h2>💚 Zero Assignment</h2>
+      
+      <h3>When Zeros Appear</h3>
+      <p>During market refill, if a zero is revealed:</p>
+      <ol>
+        <li><strong>It assigns immediately</strong> (doesn't enter the market).</li>
+        <li>If multiple zeros appear during the same refill, the first assigns, others are set aside and shuffle back into the deck when a non-zero appears.</li>
+      </ol>
+
+      <h3>Who is Eligible to Receive a Zero?</h3>
+      <ul>
+        <li>✅ Haven't STOPPED yet</li>
+        <li>✅ Haven't exploded</li>
+        <li>✅ Have at least 1 number in their line</li>
+      </ul>
+
+      <h3>Assignment Rule</h3>
+      <p>Each zero has a <strong>target</strong> that determines who receives it:</p>
+
+      <div class="phase">
+        <strong>YOU</strong> → the active player (if eligible)
+      </div>
+
+      <div class="phase">
+        <strong>MIN</strong> → the eligible player whose last number is <strong>lowest</strong>
+      </div>
+
+      <div class="phase">
+        <strong>MAX</strong> → the eligible player whose last number is <strong>highest</strong>
+      </div>
+
+      <p><em>Note: Ignore special cards and zeros when counting; only count the last actual number.</em></p>
+
+      <h3>⚠️ Protection: One Zero per Player per Turn</h3>
+      <p>During one active player's turn, each other player can receive <strong>at most 1 zero</strong>. If a second zero in the same turn would hit the same player, that zero is discarded.</p>
+
+      <div class="warning-box">
+        <h4>⚠️ Example</h4>
+        <p>Bob has the lowest number. During Carol's turn, a MIN zero hits Bob. Shortly after, another MIN zero appears that would also target Bob, but Bob already took one zero this turn → the second zero is discarded.</p>
+      </div>
+
+      <h3>Zero-Track & Explosion</h3>
+      <ul>
+        <li>0 = +1 zero-point</li>
+        <li>00 = +2 zero-points</li>
+        <li>000 = +3 zero-points</li>
+      </ul>
+      <p><strong>At 6+ zero-points, you explode:</strong></p>
+      <ul>
+        <li>Immediate STOP for the round</li>
+        <li>Your final score is <strong>halved</strong> (rounded down)</li>
+      </ul>
+
+      <div class="example-box">
+        <h4>✅ Example of Explosion</h4>
+        <p>You have 4 zero-points. You take a 000 (+3) → total 7 → you explode!</p>
+        <p>If your score would be 24, it becomes 24 ÷ 2 = 12 points.</p>
+      </div>
+    </div>
+
+    <!-- GOALS -->
+    <div class="panel" id="goals">
+      <h2>🎯 Goals & Scoring</h2>
+      
+      <h3>How Goals Work</h3>
+      <p>Each time you keep a Goal, place it in order. <strong>The activation threshold increases with each Goal you collect</strong>:</p>
+      
+      <div style="background: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p><strong>1st Goal</strong> → needs <strong>≥2 cards</strong> that match it</p>
+        <p><strong>2nd Goal</strong> → needs <strong>≥3 cards</strong> that match it</p>
+        <p><strong>3rd Goal</strong> → needs <strong>≥4 cards</strong> that match it</p>
+        <p><strong>4th Goal</strong> → needs <strong>≥5 cards</strong> that match it (and so on, +1 each)</p>
+      </div>
+
+      <h3>Goal Types</h3>
+      <ul>
+        <li><strong>🔴 Red</strong> → red cards in your line</li>
+        <li><strong>⚫ Black</strong> → black cards in your line</li>
+        <li><strong>2️⃣ Even</strong> → cards with even numbers</li>
+        <li><strong>1️⃣ Odd</strong> → cards with odd numbers</li>
+        <li><strong>⬆️ High</strong> → numbers from 21 to 40</li>
+        <li><strong>⬇️ Low</strong> → numbers from 1 to 20</li>
+      </ul>
+
+      <h3>Duplicates Allowed</h3>
+      <p>You can have two Goals of the same type (e.g., two Red Goals). Each has its own independent threshold.</p>
+
+      <h3>When a Goal Activates</h3>
+      <p>The moment you reach the threshold, <strong>flip the card face down</strong> (or rotate 90°) as a reminder that it's locked in.</p>
+
+      <div class="example-box">
+        <h4>✅ Example of Goal Activation</h4>
+        <p>You collect Goals in order: 1) Red, 2) Even, 3) High</p>
+        <p>Thresholds are: ≥2, ≥3, ≥4 respectively</p>
+        <p>Your line contains: 3 red, 2 even, 4 high</p>
+        <ul>
+          <li>🔴 Red (≥2) → you have 3 red → ✅ ACTIVE (flip face down)</li>
+          <li>2️⃣ Even (≥3) → you have 2 even → ❌ NOT active</li>
+          <li>⬆️ High (≥4) → you have 4 high → ✅ ACTIVE (flip face down)</li>
+        </ul>
+        <p><strong>Result: 2 active Goals</strong></p>
+      </div>
+    </div>
+
+    <!-- END OF ROUND -->
+    <div class="panel" id="endround">
+      <h2>🏁 End of Round & Final Score</h2>
+      
+      <h3>Scoring Steps</h3>
+      <ol>
+        <li><strong>Count your active Goals</strong></li>
+        <li><strong>Goal Score</strong> = (your Jackpot) × (# Active Goals)</li>
+        <li><strong>If you exploded</strong>, halve your score (round down)</li>
+        <li><strong>Add Order bonuses</strong>: +2 for each valid step (not multiplied)</li>
+        <li><strong>Record your total score</strong></li>
+        <li><strong>Reset everything</strong>: line, goals, zero-track</li>
+      </ol>
+
+      <div class="score-example">
+        <h4>💰 Complete Scoring Example</h4>
+        <p><strong>Situation:</strong></p>
+        <ul style="margin-top: 0;">
+          <li>Jackpot = 3</li>
+          <li>Active Goals = 2 (Red and High)</li>
+          <li>Order Bonus (from an ▲ chain) = +6</li>
+          <li>Not exploded</li>
+        </ul>
+        <p><strong>Calculation:</strong></p>
+        <p style="margin: 8px 0;">1. Base score = 3 × 2 = <strong>6 points</strong></p>
+        <p style="margin: 8px 0;">2. No explosion, stays 6 points</p>
+        <p style="margin: 8px 0;">3. Add order bonus = 6 + 6 = <strong>12 points</strong></p>
+      </div>
+
+      <h3>After Rounds 1 & 2</h3>
+      <p>Sum your scores and start the next round with a new starting jackpot calculated from the leaderboard gap.</p>
+
+      <h3>Game End (after Round 3)</h3>
+      <p><strong>Whoever has the highest total score wins!</strong></p>
+      <p>In case of a tie: winner is whoever has more active Goals in the final round (or share the victory).</p>
+    </div>
+
+    <!-- EXAMPLES -->
+    <div class="panel" id="examples">
+      <h2>📋 Detailed Examples</h2>
+
+      <h3>Example A: Special Cards Make You Targetable Again</h3>
+      <p>Nina has in her line: ..., 18, then takes Order ▲ and tucks it under 18.</p>
+      <p>Her last visible card is still a number (18). If a MAX Zero looks for the player with the highest number, Nina is still targetable.</p>
+
+      <h3>Example B: One Zero per Player per Turn</h3>
+      <p>Leo's last number is 3 (the lowest). During Maria's turn:</p>
+      <ul>
+        <li>First: a YOU zero appears that targets Leo ✅</li>
+        <li>Later: a 00 MIN appears that would target Leo again</li>
+        <li>Result: Leo already took one zero this turn → the 00 is discarded ❌</li>
+      </ul>
+
+      <h3>Example C: Remove 0 is One-Shot</h3>
+      <p>Kay takes the Remove 0 card. In her line is a 00. She:</p>
+      <ol>
+        <li>Removes the 00 from her line</li>
+        <li>Reduces her zero-track by 2 (-2 points)</li>
+        <li>Shuffles the 00 back into the deck</li>
+        <li>Discards the Remove 0 card (can't use again this round)</li>
+      </ol>
+
+      <h3>Example D: Complete Calculation with Multiple Goals</h3>
+      <div class="score-example">
+        <h4>📊 Marco's Complete Turn</h4>
+        <p><strong>Initial Situation:</strong></p>
+        <ul style="margin: 0;">
+          <li>Jackpot = 2</li>
+          <li>Line: 4 (black), 7 (black), 5 (red), 12 (black), 15 (red), 22 (black), 25 (red), 30 (black)</li>
+          <li>Goals: ① Black (threshold 2), ② Even (threshold 3), ③ High (threshold 4)</li>
+          <li>Order ▲ tucked under 7, then added 12, 22, 30</li>
+          <li>Zero-track: 1 (one single 0 received)</li>
+        </ul>
+        <p><strong>Count:</strong></p>
+        <ul style="margin: 0;">
+          <li>Black: 4, 7, 12, 22, 30 = 5 cards (≥2) ✅ ACTIVE</li>
+          <li>Even: 4, 12, 22, 30 = 4 cards (≥3) ✅ ACTIVE</li>
+          <li>High (21-40): 25, 22, 30 = 3 cards (≥4) ❌ NOT ACTIVE</li>
+          <li>Chain ▲: 7 → 12 → 22 → 30 = +2 +2 +2 = +6 bonus</li>
+        </ul>
+        <p><strong>Scoring:</strong></p>
+        <p style="margin: 8px 0;">Base score = 2 × 2 (active goals) = 4</p>
+        <p style="margin: 8px 0;">+ Order bonus = 4 + 6 = <strong>10 total points</strong></p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="panel" style="text-align: center; opacity: 0.7;">
+      <p>🎰 Rowlette — Complete Rulebook</p>
+      <p style="font-size: 0.9rem;">Print this page for a hardcopy or share it online!</p>
+    </div>
+  </div>
+</body>
+</html>
