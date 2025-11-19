@@ -1,15 +1,295 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Rowlette</title>
-  <meta http-equiv="refresh" content="0; url=rowlette_standalone_app.html?v=20250821">
-  <script>location.replace('rowlette_standalone_app.html?v=20250821');</script>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rowlette - Push Your Luck Card Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial;
+            background: linear-gradient(135deg, #0ea5e9 0%, #7c3aed 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo {
+            font-size: 5em;
+            margin-bottom: 20px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            font-size: 4em;
+            color: white;
+            letter-spacing: 10px;
+            margin-bottom: 10px;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            font-weight: 900;
+        }
+
+        .tagline {
+            color: rgba(255,255,255,0.95);
+            font-size: 1.3em;
+            font-weight: 300;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 1em;
+            font-weight: 300;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .menu-card {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            animation: fadeInUp 0.8s ease-out;
+            border: 2px solid transparent;
+        }
+
+        .menu-card:nth-child(1) { animation-delay: 0.1s; }
+        .menu-card:nth-child(2) { animation-delay: 0.2s; }
+        .menu-card:nth-child(3) { animation-delay: 0.3s; }
+
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.35);
+            border-color: #7c3aed;
+        }
+
+        .menu-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .menu-card h2 {
+            color: #7c3aed;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            font-weight: 800;
+        }
+
+        .menu-card p {
+            color: #666;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        .features {
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(8px);
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+
+        .features h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 15px;
+        }
+
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .feature-text {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        .language-note {
+            text-align: center;
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 40px;
+            font-size: 0.95em;
+            animation: fadeIn 1s ease-out 0.5s both;
+        }
+
+        .language-note strong {
+            color: #fbbf24;
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            margin-top: 40px;
+            font-size: 0.9em;
+            animation: fadeIn 1s ease-out 0.7s both;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+                letter-spacing: 5px;
+            }
+
+            .logo {
+                font-size: 3em;
+            }
+
+            .tagline {
+                font-size: 1em;
+            }
+
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .menu-card {
+                padding: 30px 20px;
+            }
+
+            .features-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  If you are not redirected, <a href="rowlette_standalone_app.html?v=20250821">click here</a>.
+    <div class="container">
+        <div class="logo-section">
+            <div class="logo">🎰</div>
+            <h1>ROWLETTE</h1>
+            <p class="tagline">Push Your Luck Card Game</p>
+            <p class="subtitle">3-card market • Goals • Jackpot • Zeros</p>
+        </div>
+
+        <div class="features">
+            <h3>⚡ Fast-Paced Family Game</h3>
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-text">2-4 Players</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⏱️</div>
+                    <div class="feature-text">20-30 Minutes</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-text">3 Rounds</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎮</div>
+                    <div class="feature-text">AI Opponents</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="language-note">
+            🌐 Game supports <strong>English</strong> and <strong>Italian</strong><br>
+            Choose your language in the game settings
+        </div>
+
+        <div class="menu-grid">
+            <a href="rowlette_ai.html" class="menu-card">
+                <span class="menu-icon">🎮</span>
+                <h2>Play Game</h2>
+                <p>Launch the web app and start playing Rowlette online. Includes AI opponents with difficulty settings.</p>
+            </a>
+
+            <a href="rowlette_rulebook_en.html" class="menu-card">
+                <span class="menu-icon">📖</span>
+                <h2>Rulebook</h2>
+                <p>Learn how to play with complete rules, examples, and detailed scoring explanation.</p>
+            </a>
+
+            <a href="#" class="menu-card" style="opacity: 0.6; cursor: not-allowed;">
+                <span class="menu-icon">🎯</span>
+                <h2>Quick Reference</h2>
+                <p>Print-friendly reference card. (Coming soon)</p>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>🎰 Rowlette © 2025 | A game of strategy, luck, and calculated risks</p>
+        </div>
+    </div>
 </body>
 </html>
