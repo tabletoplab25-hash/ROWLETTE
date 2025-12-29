@@ -247,12 +247,12 @@
       <p>Use this formula based on the leaderboard gap:</p>
       <div class="score-example">
         <h4>⚡ Formula</h4>
-        <p style="margin: 0;">gap = leader_total − your_total</p>
-        <p style="margin: 8px 0 0 0;"><strong>starting_jackpot = 1 + min(3, ⌊gap / 10⌋)</strong></p>
-        <p style="margin: 8px 0 0 0;"><em>Example: if you're 25 points behind, your jackpot is 1 + min(3, 2) = 3</em></p>
+        <p style="margin: 0;">gap = leader_total − your_total(rounded down)</p>
+        <p style="margin: 8px 0 0 0;"><strong>starting_jackpot = 1 + (gap / 10)</strong></p>
+        <p style="margin: 8px 0 0 0;"><em>Example: if you're 25 points behind, your starting jackpot is 1 + 2 = 3</em></p>
       </div>
 
-      <p>Jackpot ranges from 1 to 4, giving a small boost to players who are behind.</p>
+      <p>Jackpot ranges from 1 to 4, giving a boost to players who are behind.</p>
     </div>
 
     <!-- TURN STRUCTURE -->
